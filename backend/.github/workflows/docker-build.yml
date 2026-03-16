@@ -1,0 +1,257 @@
+name: Build Docker Image
+
+on:
+  pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Note: Aggressive cleanup is safe - Docker builds are self-contained and don't need host toolchains
+      - name: Free up disk space
+        run: |
+          echo "=== Before cleanup ==="
+          df -h
+          # Remove large unnecessary directories
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /opt/hostedtoolcache/go
+          sudo rm -rf /opt/hostedtoolcache/node
+          sudo rm -rf /opt/hostedtoolcache/Python
+          sudo rm -rf /opt/hostedtoolcache/Ruby
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /usr/share/miniconda
+          sudo rm -rf /usr/local/graalvm
+          sudo rm -rf /usr/local/share/chromium
+          # Clean apt cache
+          sudo apt-get clean
+          # Docker cleanup
+          sudo docker image prune --all --force
+          sudo docker builder prune -a --force
+          sudo docker system prune -a --force --volumes
+          echo "=== After cleanup ==="
+          df -h
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/morphik-core
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix=pr-{{branch}}-
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./dockerfile
+          push: false
+          load: true
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            morphik-core:test
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          # Remove cache-to for PR builds to save disk space
+
+      - name: Test Docker container
+        run: |
+          # Use the local test tag instead of the registry tag
+          IMAGE_TAG="morphik-core:test"
+          echo "Testing image: $IMAGE_TAG"
+
+          # Create a config file for testing (mirrors morphik.docker.toml)
+          cat > morphik.toml.test << 'EOF'
+          [api]
+          host = "0.0.0.0"
+          port = 8000
+          reload = true
+
+          [service]
+          environment = "docker"
+          version = "unknown"
+          enable_profiling = false
+
+          [auth]
+          jwt_algorithm = "HS256"
+          bypass_auth_mode = true
+          dev_entity_id = "dev_user"
+          dev_entity_type = "developer"
+          dev_permissions = ["read", "write", "admin"]
+
+          #### Registered models
+          [registered_models]
+          # OpenAI models
+          openai_gpt4-1 = { model_name = "gpt-4.1" }
+          openai_gpt4-1-mini = { model_name = "gpt-4.1-mini" }
+
+          # Anthropic models
+          claude_sonnet = { model_name = "claude-3-7-sonnet-latest" }
+
+          # Google Gemini models
+          gemini_flash = { model_name = "gemini/gemini-2.5-flash-preview-05-20" }
+
+          # Embedding models
+          openai_embedding = { model_name = "text-embedding-3-small" }
+          openai_embedding_large = { model_name = "text-embedding-3-large" }
+
+          #### Component configurations ####
+
+          [completion]
+          model = "openai_gpt4-1-mini"
+          default_max_tokens = "1000"
+          default_temperature = 0.3
+
+          [database]
+          provider = "postgres"
+          pool_size = 10
+          max_overflow = 15
+          pool_recycle = 3600
+          pool_timeout = 10
+          pool_pre_ping = true
+          max_retries = 3
+          retry_delay = 1.0
+
+          [embedding]
+          model = "openai_embedding"
+          dimensions = 1536
+          similarity_metric = "cosine"
+
+          [parser]
+          chunk_size = 6000
+          chunk_overlap = 300
+          use_contextual_chunking = false
+          contextual_chunking_model = "openai_gpt4-1-mini"
+
+          [parser.xml]
+          max_tokens = 350
+          preferred_unit_tags = ["SECTION", "Section", "Article", "clause"]
+          ignore_tags = ["TOC", "INDEX"]
+
+          [document_analysis]
+          model = "openai_gpt4-1-mini"
+
+          [parser.vision]
+          model = "openai_gpt4-1-mini"
+          frame_sample_rate = -1
+
+          [reranker]
+          use_reranker = false
+          provider = "flag"
+          model_name = "BAAI/bge-reranker-large"
+          query_max_length = 256
+          passage_max_length = 512
+          use_fp16 = true
+          device = "cpu"
+
+          [storage]
+          provider = "local"
+          storage_path = "./storage"
+
+          [vector_store]
+          provider = "pgvector"
+
+          [multivector_store]
+          provider = "postgres"
+
+          [redis]
+          url = "redis://redis:6379/0"
+          host = "redis"
+          port = 6379
+
+          [worker]
+          arq_max_jobs = 1
+          colpali_store_batch_size = 16
+
+          [pdf]
+          colpali_pdf_dpi = 150
+
+          [morphik]
+          enable_colpali = true
+          mode = "self_hosted"
+          use_local_env = true
+          api_domain = "api.morphik.ai"
+          morphik_embedding_api_domain = "http://localhost:6000"
+          colpali_mode = "local"
+
+          [pdf_viewer]
+          frontend_url = "http://localhost:3000/api/pdf"
+
+          [graph]
+          model = "openai_gpt4-1-mini"
+          enable_entity_resolution = true
+
+          [telemetry]
+          service_name = "databridge-core"
+          project_name = "oss_docker"
+          upload_interval_hours = 4.0
+          max_local_bytes = 1073741824
+          EOF
+
+          # Start container in detached mode with config mounted
+          CONTAINER_ID=$(docker run -d -p 8000:8000 \
+            -e POSTGRES_URI="postgresql://morphik:morphik@localhost:5432/morphik" \
+            -v "$(pwd)/morphik.toml.test:/app/morphik.toml" \
+            "$IMAGE_TAG")
+
+          echo "Started container: $CONTAINER_ID"
+
+          # Wait for server to be ready with 60 second timeout
+          timeout=60
+          interval=2
+          elapsed=0
+
+          echo "Waiting for server to be ready..."
+          while [ $elapsed -lt $timeout ]; do
+            if curl -f -s http://localhost:8000/ping > /dev/null 2>&1; then
+              echo "✅ Server is responding to /ping endpoint"
+              break
+            fi
+
+            echo "⏳ Waiting for server... (${elapsed}s/${timeout}s)"
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+
+          # Check if we timed out
+          if [ $elapsed -ge $timeout ]; then
+            echo "❌ Server failed to respond within ${timeout} seconds"
+            echo "Container logs:"
+            docker logs "$CONTAINER_ID"
+            docker stop "$CONTAINER_ID"
+            docker rm "$CONTAINER_ID"
+            exit 1
+          fi
+
+          # Verify the response is actually 200
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/ping)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Health check passed - /ping returned HTTP $HTTP_CODE"
+          else
+            echo "❌ Health check failed - /ping returned HTTP $HTTP_CODE"
+            docker logs "$CONTAINER_ID"
+            docker stop "$CONTAINER_ID"
+            docker rm "$CONTAINER_ID"
+            exit 1
+          fi
+
+          # Clean up
+          echo "🧹 Cleaning up container"
+          docker stop "$CONTAINER_ID"
+          docker rm "$CONTAINER_ID"
+          echo "✅ Test completed successfully"

@@ -1,0 +1,112 @@
+[api]
+host = "0.0.0.0"
+port = 8000
+reload = true
+
+[service]
+environment = "development"
+version = "unknown"
+enable_profiling = false
+
+[auth]
+jwt_algorithm = "HS256"
+bypass_auth_mode = true
+dev_user_id = "dev_user"
+
+#### Registered models
+[registered_models]
+# Ollama models
+ollama_qwen_vision = { model_name = "ollama_chat/qwen2.5vl:latest", api_base = "http://host.docker.internal:11434", vision = true }
+ollama_embedding = { model_name = "ollama/nomic-embed-text", api_base = "http://host.docker.internal:11434" }
+
+#### Component configurations ####
+
+[completion]
+model = "ollama_qwen_vision"
+default_max_tokens = "1000"
+default_temperature = 0.3
+
+[database]
+provider = "postgres"
+pool_size = 10
+max_overflow = 15
+pool_recycle = 3600
+pool_timeout = 10
+pool_pre_ping = true
+max_retries = 3
+retry_delay = 1.0
+
+[embedding]
+model = "ollama_embedding"
+dimensions = 768
+similarity_metric = "cosine"
+
+[parser]
+chunk_size = 6000
+chunk_overlap = 300
+use_contextual_chunking = false
+contextual_chunking_model = "ollama_qwen_vision"
+
+[parser.xml]
+max_tokens = 350
+preferred_unit_tags = ["SECTION", "Section", "Article", "clause"]
+ignore_tags = ["TOC", "INDEX"]
+
+[document_analysis]
+model = "ollama_qwen_vision"
+
+[parser.vision]
+model = "ollama_qwen_vision"
+frame_sample_rate = -1
+
+[reranker]
+use_reranker = false
+provider = "flag"
+model_name = "BAAI/bge-reranker-large"
+query_max_length = 256
+passage_max_length = 512
+use_fp16 = true
+device = "mps" 
+
+[storage]
+provider = "local"
+storage_path = "./storage"
+cache_enabled = false
+cache_max_size_gb = 10
+s3_upload_concurrency = 16
+
+[vector_store]
+provider = "pgvector"
+
+[multivector_store]
+provider = "postgres"
+
+[redis]
+url = "redis://redis:6379/0"
+host = "redis"
+port = 6379
+
+[worker]
+arq_max_jobs = 1
+colpali_store_batch_size = 16
+
+[pdf]
+colpali_pdf_dpi = 150
+
+[morphik]
+enable_colpali = true
+mode = "self_hosted"
+secret_manager = "env"
+api_domain = "api.morphik.ai"
+morphik_embedding_api_domain = ["http://localhost:6000"]
+colpali_mode = "local"
+parser_mode = "local"
+
+[pdf_viewer]
+frontend_url = "http://localhost:3000/api/pdf"
+
+[telemetry]
+service_name = "databridge-core"
+project_name = ""
+upload_interval_hours = 4.0
+max_local_bytes = 1073741824
