@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, TableStructureOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from httpx import AsyncClient, Timeout
 
@@ -237,11 +237,18 @@ class MorphikParser(BaseParser):
     def _get_docling_converter(cls) -> DocumentConverter:
         """Get or create the cached Docling converter."""
         if cls._docling_converter is None:
-            # Configure pipeline options for better performance
             pipeline_options = PdfPipelineOptions()
-            # Use fast OCR settings by default
             pipeline_options.do_ocr = True
+            try:
+                import easyocr  # noqa: F401
+                from docling.datamodel.pipeline_options import EasyOcrOptions
+                pipeline_options.ocr_options = EasyOcrOptions(lang=["en"])
+            except ImportError:
+                pass  # Use Docling's default OCR if EasyOCR is unavailable
             pipeline_options.do_table_structure = True
+            pipeline_options.table_structure_options = TableStructureOptions(mode="accurate")
+            pipeline_options.images_scale = 2.0
+            pipeline_options.generate_picture_images = True
 
             cls._docling_converter = DocumentConverter(
                 format_options={
@@ -366,8 +373,92 @@ class MorphikParser(BaseParser):
 
         raise RuntimeError(f"All parse API endpoints failed. Last error: {last_error}")
 
+    async def _parse_with_gemini_vision(self, file: bytes, filename: str) -> str:
+        """Extract text from a PDF using Gemini vision, page by page via pymupdf rendering."""
+        import asyncio
+        import base64
+        import litellm
+
+        model_key = getattr(self.settings, "DOCUMENT_ANALYSIS_MODEL", None)
+        if not model_key:
+            self.logger.warning("DOCUMENT_ANALYSIS_MODEL not configured; skipping vision fallback")
+            return ""
+        if not hasattr(self.settings, "REGISTERED_MODELS") or model_key not in self.settings.REGISTERED_MODELS:
+            self.logger.warning(f"Document analysis model '{model_key}' not in registered_models; skipping vision")
+            return ""
+
+        model_config = self.settings.REGISTERED_MODELS[model_key]
+        model_name = model_config.get("model_name", "")
+
+        try:
+            import fitz  # pymupdf
+        except ImportError:
+            self.logger.warning("pymupdf not installed; cannot use vision fallback")
+            return ""
+
+        suffix = os.path.splitext(filename)[1].lower() or ".pdf"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(file)
+            tmp_path = tmp.name
+
+        all_pages_text: list[str] = []
+        try:
+            def render_pages():
+                doc = fitz.open(tmp_path)
+                pages_data = []
+                for page in doc:
+                    pix = page.get_pixmap(dpi=150)
+                    pages_data.append(pix.tobytes("png"))
+                doc.close()
+                return pages_data
+
+            pages_png = await asyncio.to_thread(render_pages)
+            self.logger.info(f"Vision fallback: processing {len(pages_png)} pages with {model_name}")
+
+            for i, png_bytes in enumerate(pages_png):
+                b64 = base64.standard_b64encode(png_bytes).decode("utf-8")
+                messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": (
+                                    "Extract ALL text content from this document page, "
+                                    "including every table. Render tables as markdown tables. "
+                                    "Preserve headings, sections, and all data values. "
+                                    "Output only the extracted content."
+                                ),
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/png;base64,{b64}"},
+                            },
+                        ],
+                    }
+                ]
+                model_params: dict = {"model": model_name, "messages": messages}
+                for key, value in model_config.items():
+                    if key != "model_name":
+                        model_params[key] = value
+
+                try:
+                    resp = await litellm.acompletion(**model_params)
+                    page_text = resp.choices[0].message.content or ""
+                    if page_text.strip():
+                        all_pages_text.append(f"<!-- page {i + 1} -->\n{page_text.strip()}")
+                except Exception as page_err:
+                    self.logger.warning(f"Vision extraction failed for page {i + 1}: {page_err}")
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+
+        return "\n\n".join(all_pages_text)
+
     async def _parse_document_local(self, file: bytes, filename: str) -> str:
-        """Parse document using local Docling."""
+        """Parse document using local Docling, with Gemini vision fallback for PDFs with poor extraction."""
         import subprocess
         import shutil
         import asyncio
@@ -430,15 +521,32 @@ class MorphikParser(BaseParser):
             # Run Docling conversion in a thread to avoid blocking the event loop
             import asyncio
             converter = self._get_docling_converter()
-            
+
             def run_docling():
                 return converter.convert(temp_path)
-                
+
             result = await asyncio.to_thread(run_docling)
             text = result.document.export_to_markdown()
 
             if not text.strip():
                 self.logger.warning(f"Docling returned no text for {filename}")
+
+            # Vision fallback for PDFs: if Docling extracted very little text relative to file
+            # size (< 50 chars/KB), the document likely contains image-based tables or complex
+            # layouts that Docling can't parse — use Gemini vision to extract the content.
+            is_pdf = suffix == ".pdf"
+            file_kb = len(file) / 1024
+            chars_per_kb = len(text.strip()) / max(file_kb, 1)
+            if is_pdf and chars_per_kb < 50:
+                self.logger.info(
+                    f"Docling yielded only {chars_per_kb:.1f} chars/KB for {filename}; "
+                    "trying Gemini vision fallback"
+                )
+                vision_text = await self._parse_with_gemini_vision(file, filename)
+                if vision_text.strip():
+                    self.logger.info(f"Vision fallback extracted {len(vision_text)} chars from {filename}")
+                    return vision_text
+                self.logger.warning(f"Vision fallback returned no text for {filename}; using Docling output")
 
             return text
         except Exception as e:

@@ -101,7 +101,7 @@ class LiteLLMEmbeddingModel(BaseEmbeddingModel):
                 else:
                     logger.warning(
                         f"Embedding dimension mismatch: got {len(embeddings[0])}, expected {self.dimensions}. "
-                        f"Please update your VECTOR_DIMENSIONS setting to match the actual dimension."
+                        f"Dimension is smaller than expected, which may cause database insertion errors."
                     )
 
             return embeddings
