@@ -120,16 +120,7 @@ services:
     networks:
       - morphik-network
 
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-      - ./ollama-entrypoint.sh:/ollama-entrypoint.sh
-    networks:
-      - morphik-network
-    entrypoint: ["/ollama-entrypoint.sh"]
+  # ollama service removed — this deployment uses cloud Gemini models (GEMINI_API_KEY)
 
 networks:
   morphik-network:
@@ -137,6 +128,5 @@ networks:
 
 volumes:
   postgres_data:
-  ollama_data:
   huggingface_cache:
   redis_data:
