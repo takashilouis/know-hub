@@ -1,0 +1,212 @@
+# KNOW-hub: The Obsidian Void
+
+## Product Overview
+
+**The Pitch:** KNOW-hub is an enterprise-grade knowledge engine stripped to its absolute essence. By removing visual noise and adopting a high-contrast, pure-black interface, it prioritizes speed, data density, and precision for navigating massive institutional intelligence.
+
+**For:** Data scientists, researchers, and AI operators who demand zero-latency access to complex information and despise cluttered interfaces.
+
+**Device:** desktop
+
+**Design Direction:** Unapologetically brutalist high-tech. True black backgrounds, razor-sharp 1px borders, and monospaced accents that evoke a terminal environment while retaining premium SaaS ergonomics.
+
+**Inspired by:** Grok (xAI), Linear
+
+---
+
+## Screens
+
+- **Home Dashboard:** Command center for system vitals, rapid access, and recent ingestions
+- **Knowledge Base:** Data-dense tabular view for managing folders, files, and ingestion states
+- **Semantic Search:** Full-canvas query interface with highlighted contextual text excerpts
+- **Ask AI / Chat:** Deep-dive conversational interface with scope selectors and inline citations
+- **Connections:** Grid overlay for managing third-party data pipelines (Drive, Slack, etc.)
+- **Settings:** Tabbed configuration terminal for API keys, models, and system usage
+
+---
+
+## Key Flows
+
+**Semantic Discovery:** Finding exact intelligence across disparate sources
+
+1. User is on **Home Dashboard** -> sees global search bar at top center
+2. User clicks global search or hits `Cmd+K` -> transitions seamlessly to **Semantic Search** view
+3. Types query -> real-time rendering of 2-column result cards with exact highlighted text excerpts
+
+**Knowledge Ingestion:** Adding new context to the AI's brain
+
+1. User is on **Knowledge Base** -> sees top toolbar
+2. User clicks `[+] Upload` -> triggers a subtle glassmorphic modal
+3. Uploads PDF -> status chip in table updates to `Processing` with a pulsing `#F59E0B` indicator
+
+---
+
+<details>
+<summary>Design System</summary>
+
+## Color Palette
+
+- **Primary:** `#FFFFFF` - Buttons, active tabs, primary CTAs
+- **Background:** `#000000` - Absolute black for all page backgrounds
+- **Surface:** `#0A0A0A` - Cards, inputs, deep navigation
+- **Text:** `#EDEDED` - Primary readable body text
+- **Muted:** `#737373` - Secondary text, timestamps, placeholder text
+- **Border:** `#262626` - Sharp 1px dividers, card outlines
+- **Success:** `#10B981` - Synced status, completed processing
+- **Warning:** `#F59E0B` - Processing states, missing metadata
+- **Danger:** `#EF4444` - Failed uploads, destructive actions
+- **Glass:** `rgba(10, 10, 10, 0.6)` - Subtly blurred overlays (blur-md)
+
+## Typography
+
+- **Headings:** `Space Grotesk`, 600, 24-48px, tracking -0.04em
+- **Body:** `Geist`, 400, 14-16px, line-height 1.6
+- **Data/Monospace:** `JetBrains Mono`, 400, 12-14px (used for IDs, timestamps, exact matches)
+- **Buttons:** `Space Grotesk`, 500, 14px, uppercase tracking 0.05em
+
+**Style notes:** Absolute zero border radius (`0px`) on everything. Sharp corners. No box shadows. Depth is created entirely through 1px borders (`#262626`) and typography hierarchy.
+
+## Design Tokens
+
+```css
+:root {
+  --color-primary: #FFFFFF;
+  --color-background: #000000;
+  --color-surface: #0A0A0A;
+  --color-text: #EDEDED;
+  --color-muted: #737373;
+  --color-border: #262626;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Geist', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 0px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary>Screen Specifications</summary>
+
+### Global Sidebar (Present on all screens)
+
+**Purpose:** Primary persistent navigation
+
+**Layout:** 280px left sidebar, collapsible to 64px. Sticks to full viewport height.
+
+**Key Elements:**
+- **Brand Logo:** `Space Grotesk`, 700, 20px, `KNOW-hub`, top left padding 24px
+- **Nav Links:** `Home`, `Knowledge`, `Search`, `Ask AI`, `Connections`, `Settings`. 14px `Geist`, 400. Hover adds `#262626` background.
+- **Collapse Toggle:** 24x24px icon button at bottom right of sidebar
+
+### Home Dashboard
+
+**Purpose:** High-level system overview and rapid entry point
+
+**Layout:** Top hero search, middle stats row, bottom split (quick actions left, recent docs right)
+
+**Key Elements:**
+- **Hero Heading:** `Space Grotesk`, 600, 32px, `System Intelligence Active`
+- **Search Bar:** 64px height, `#0A0A0A` background, 1px `#262626` border, `Geist` 16px text
+- **Stats Row:** 3 blocks. Title in `JetBrains Mono` 12px `#737373`. Value in `Space Grotesk` 32px `#FFFFFF`
+- **Recent Docs:** List items with 1px bottom borders. File name left, timestamp right (`JetBrains Mono` 12px)
+
+**States:**
+- **Empty:** "No documents indexed. Initialize intelligence pipeline."
+- **Loading:** Pulsing `#1A1A1A` rectangles
+
+**Components:**
+- **Stat Block:** 240x120px, `#0A0A0A` surface, 1px `#262626` border
+
+**Interactions:**
+- **Hover Stat Block:** Border changes to `#FFFFFF`, 0.2s transition
+
+### Knowledge Base
+
+**Purpose:** Granular control over the vector database and files
+
+**Layout:** Top toolbar, full-width data table below
+
+**Key Elements:**
+- **Toolbar:** `[+] New Folder`, `[↑] Upload`, `[↻] Refresh`. Buttons are `#FFFFFF` text, transparent bg, 1px border.
+- **Data Table:** Columns for `Name`, `Type`, `Tokens`, `Status`, `Last Modified`. 
+- **Status Chips:** `JetBrains Mono` 12px. `[SYNCED]` (`#10B981`), `[PROCESSING]` (`#F59E0B`), `[FAILED]` (`#EF4444`)
+
+**States:**
+- **Loading:** Table rows replaced by linear skeleton loaders
+
+**Interactions:**
+- **Hover Row:** Row background shifts to `#0A0A0A`
+
+### Semantic Search
+
+**Purpose:** Deep retrieval with exact context highlighting
+
+**Layout:** Full-width top sticky input, masonry or 2-column grid of results below
+
+**Key Elements:**
+- **Search Input:** 80px height, massive 24px `Space Grotesk` typography
+- **Filter Chips:** Under search. `PDFs`, `Slack`, `Notion`. `#0A0A0A` bg, 1px border.
+- **Result Card:** Shows document title, relevance score (`98.4%`), and a text snippet. Exact match phrases have `#FFFFFF` text on `#333333` background.
+
+### Ask AI / Chat
+
+**Purpose:** Conversational interaction with the knowledge base
+
+**Layout:** 280px left inner-sidebar (history), main chat area right
+
+**Key Elements:**
+- **Model Selector:** Dropdown top right. `GPT-4o`, `Claude 3.5 Sonnet`, `Llama 3`.
+- **Chat Bubbles:** No bubbles. User queries are `Geist` 16px `#FFFFFF`. AI responses are `Geist` 16px `#EDEDED` with a 2px `#262626` left border.
+- **Citations:** Inline `[1]`, `[2]` linking to source docs. Hovering shows a glassmorphic tooltip with the source snippet.
+- **Input Area:** Fixed at bottom. Includes `@` scope selector for targeting specific folders.
+
+**Interactions:**
+- **Hover Citation:** Tooltip fades in (`opacity 0 -> 1`), `-translate-y-1` animation
+
+### Connections
+
+**Purpose:** Managing third-party integrations
+
+**Layout:** Responsive CSS Grid of integration cards
+
+**Key Elements:**
+- **Integration Card:** 320x160px. Brand icon left, title right. `Space Grotesk` 18px.
+- **Status Badge:** Top right of card. `Connected` or `Disconnected`.
+
+### Settings
+
+**Purpose:** System configuration
+
+**Layout:** 200px left inner-tabs, right form content
+
+**Key Elements:**
+- **Tabs:** `API Keys`, `Models`, `Configuration`, `Usage`. 
+- **Forms:** Inputs have `#0A0A0A` bg, 1px border. Labels are `JetBrains Mono` 12px uppercase.
+- **Primary CTA:** `SAVE CONFIGURATION` - `#FFFFFF` background, `#000000` text (inverted for primary action).
+
+</details>
+
+---
+
+<details>
+<summary>Build Guide</summary>
+
+**Stack:** HTML + Tailwind CSS v3 + React/Next.js
+
+**Build Order:**
+1. **Global Layout & Sidebar:** Establishes the `#000000` base, routing, and exact spacing.
+2. **Home Dashboard:** Validates the typography hierarchy (`Space Grotesk` vs `Geist` vs `JetBrains Mono`) and sharp borders.
+3. **Knowledge Base:** Implements complex table data, status colors (`#10B981`, etc.), and interaction states.
+4. **Ask AI / Chat:** Requires intricate flexbox/scroll handling and complex component assembly (citations, scope selectors).
+5. **Semantic Search:** Reuses cards from Home but tests layout density and text highlighting logic.
+6. **Connections & Settings:** Fleshes out forms, grids, and standard inputs.
+
+</details>

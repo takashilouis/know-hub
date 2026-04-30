@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KNOW-hub | Semantic Engine</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Inter:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #000000;
+            color: #dce5dd;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        /* Custom scrollbar for technical feel */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1511;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #12d393;
+        }
+        /* Reset any default rounding for "The Obsidian Void" */
+        * {
+            border-radius: 0 !important;
+        }
+        .brutal-border {
+            border: 1px solid #262626;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#006c49",
+                        "secondary-fixed-dim": "#b7cbc2",
+                        "on-secondary-fixed-variant": "#394a44",
+                        "on-surface": "#dce5dd",
+                        "on-secondary-fixed": "#0e1f19",
+                        "surface-tint": "#31e09f",
+                        "secondary": "#b7cbc2",
+                        "tertiary-container": "#ffa55c",
+                        "surface": "#0d1511",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffdcc4",
+                        "surface-variant": "#2f3731",
+                        "surface-dim": "#0d1511",
+                        "surface-container-high": "#242c27",
+                        "on-primary-fixed": "#002113",
+                        "primary-fixed-dim": "#31e09f",
+                        "on-tertiary-fixed-variant": "#6f3800",
+                        "on-secondary": "#23342e",
+                        "error": "#ffb4ab",
+                        "primary": "#48f0ad",
+                        "secondary-container": "#3b4d46",
+                        "primary-fixed": "#5afeba",
+                        "surface-container-low": "#161d19",
+                        "secondary-fixed": "#d3e7de",
+                        "on-error": "#690005",
+                        "surface-container-lowest": "#08100c",
+                        "on-tertiary-container": "#743b00",
+                        "inverse-on-surface": "#2a322d",
+                        "outline-variant": "#3c4a41",
+                        "on-surface-variant": "#bacabf",
+                        "outline": "#85948a",
+                        "on-background": "#dce5dd",
+                        "error-container": "#93000a",
+                        "tertiary": "#ffcba6",
+                        "surface-bright": "#333b36",
+                        "on-tertiary": "#4e2600",
+                        "surface-container": "#19211d",
+                        "tertiary-fixed-dim": "#ffb780",
+                        "on-secondary-container": "#a9bdb4",
+                        "background": "#0d1511",
+                        "on-tertiary-fixed": "#2f1400",
+                        "on-primary-fixed-variant": "#005236",
+                        "surface-container-highest": "#2f3731",
+                        "inverse-surface": "#dce5dd",
+                        "primary-container": "#12d393",
+                        "on-primary-container": "#005539",
+                        "on-primary": "#003824",
+                        "accent": "#12d393",
+                        "muted": "#737373"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "display-lg": ["Space Grotesk"],
+                        "body-base": ["Inter"],
+                        "label-mono": ["JetBrains Mono"],
+                        "nav-link": ["Space Grotesk"],
+                        "display": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["18px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "display-lg": ["30px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "body-base": ["14px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-mono": ["12px", {"letterSpacing": "0.02em", "fontWeight": "500"}],
+                        "nav-link": ["14px", {"lineHeight": "normal", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-black text-on-surface">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-64 border-r border-[#262626] bg-black flex flex-col z-50" style="font-family: 'Space Grotesk', sans-serif;">
+<div class="flex-1 flex flex-col justify-between p-4 bg-background-dark">
+<div class="flex flex-col gap-8 w-full">
+<div class="flex gap-3 px-2 items-center py-2">
+<h1 class="text-white text-xl font-bold leading-normal tracking-tight font-display">KNOW-hub</h1>
+<div class="w-1.5 h-1.5 bg-accent rounded-full"></div>
+</div>
+<div class="flex flex-col gap-1 w-full">
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">house</div>
+<p class="text-sm font-medium leading-normal">Home</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">database</div>
+<p class="text-sm font-medium leading-normal">Knowledge</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#0A0A0A] text-[#12d393] brutal-border" href="#" style="border-left: 2px solid rgb(18, 211, 147);">
+<div class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">search</div>
+<p class="text-sm font-medium leading-normal">Search</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">chat</div>
+<p class="text-sm font-medium leading-normal">Ask AI</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">link</div>
+<p class="text-sm font-medium leading-normal">Connections</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">settings</div>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</div>
+</div>
+</div>
+<div class="px-6 mt-auto pb-6 space-y-4">
+<button class="w-full py-2 bg-zinc-900 border border-zinc-800 text-[#12d393] font-['JetBrains_Mono'] text-[10px] tracking-widest uppercase hover:bg-zinc-800 transition-all">
+            NEW_TASK
+        </button>
+<div class="space-y-1">
+<a class="flex items-center gap-2 text-zinc-600 font-['JetBrains_Mono'] text-[10px] uppercase hover:text-zinc-400" href="#">
+<span class="material-symbols-outlined text-xs">sensors</span>
+                System Status
+            </a>
+<a class="flex items-center gap-2 text-zinc-600 font-['JetBrains_Mono'] text-[10px] uppercase hover:text-zinc-400" href="#">
+<span class="material-symbols-outlined text-xs">menu_book</span>
+                Documentation
+            </a>
+</div>
+</div>
+</aside>
+<!-- TopAppBar: Moved page-specific sub-navigation here if needed, or simplified -->
+<header class="fixed top-0 left-64 right-0 h-14 bg-black border-b border-zinc-800 z-40 flex items-center px-8">
+<nav class="flex gap-8">
+<a class="text-[#12d393] font-mono text-[10px] tracking-wider uppercase" href="#">Search</a>
+<a class="text-zinc-500 font-mono text-[10px] tracking-wider uppercase hover:text-[#12d393] transition-colors" href="#">Index</a>
+<a class="text-zinc-500 font-mono text-[10px] tracking-wider uppercase hover:text-[#12d393] transition-colors" href="#">Datasets</a>
+<a class="text-zinc-500 font-mono text-[10px] tracking-wider uppercase hover:text-[#12d393] transition-colors" href="#">Logs</a>
+</nav>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-14 min-h-[calc(100vh-3.5rem)] p-8">
+<div class="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+<!-- Left Column: Search Controls -->
+<section class="space-y-6">
+<div>
+<h1 class="font-headline-md text-[24px] text-white font-bold uppercase tracking-tight mb-1">Search</h1>
+<p class="font-body-base text-zinc-500">Search your documents and retrieve relevant content</p>
+</div>
+<!-- Query Card -->
+<div class="bg-zinc-950 border border-zinc-800 p-4 space-y-4">
+<label class="font-label-mono text-[10px] text-zinc-500 uppercase tracking-widest">Query</label>
+<textarea class="w-full h-32 bg-black border border-zinc-800 focus:border-[#12d393] text-on-surface font-body-base p-4 resize-none outline-none transition-colors" placeholder="Type your semantic query here..."></textarea>
+<div class="flex justify-between items-center">
+<button class="flex items-center gap-2 px-4 py-2 border border-zinc-800 text-zinc-400 font-label-mono text-[11px] uppercase hover:bg-zinc-900 hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">upload_file</span>
+                        Upload image
+                    </button>
+<div class="flex gap-2">
+<button class="px-6 py-2 border border-zinc-800 text-zinc-500 font-label-mono text-[11px] uppercase hover:bg-zinc-900 transition-all">Clear</button>
+<button class="px-8 py-2 bg-[#12d393] text-black font-label-mono font-bold text-[11px] uppercase hover:brightness-110 transition-all">Search</button>
+</div>
+</div>
+</div>
+<!-- Parameters Section -->
+<div class="space-y-4">
+<h3 class="font-label-mono text-[11px] text-[#12d393] uppercase tracking-[0.2em] border-b border-zinc-800 pb-2">Parameters</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<label class="font-label-mono text-[10px] text-zinc-500 uppercase">Number of results</label>
+<span class="font-label-mono text-[9px] text-zinc-700">Max: 100</span>
+</div>
+<input class="w-full bg-zinc-950 border border-zinc-800 text-on-surface font-label-mono p-2 focus:border-[#12d393] outline-none" type="number" value="10"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-mono text-[10px] text-zinc-500 uppercase">Scope to folder</label>
+<div class="relative">
+<select class="w-full bg-zinc-950 border border-zinc-800 text-on-surface font-label-mono p-2 pr-8 focus:border-[#12d393] outline-none appearance-none cursor-pointer">
+<option>Root / All Documents</option>
+<option>Internal / Legal</option>
+<option>Research / AI_Papers</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-500">expand_more</span>
+</div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-end">
+<label class="font-label-mono text-[10px] text-zinc-500 uppercase">Minimum score</label>
+<span class="font-label-mono text-[9px] text-zinc-700">Filter results below this threshold</span>
+</div>
+<input class="w-full accent-[#12d393] bg-zinc-900 h-1 appearance-none cursor-pointer" type="range"/>
+<div class="flex justify-between font-label-mono text-[9px] text-zinc-600">
+<span>0.0</span>
+<span>0.85 (CURRENT)</span>
+<span>1.0</span>
+</div>
+</div>
+</div>
+<!-- Metadata Filters Card -->
+<div class="bg-zinc-950 border border-zinc-800 p-4 space-y-4">
+<label class="font-label-mono text-[10px] text-zinc-500 uppercase tracking-widest">Metadata filters (JSON)</label>
+<div class="relative">
+<textarea class="w-full h-40 bg-black border border-zinc-800 focus:border-[#12d393] text-[#12d393] font-['JetBrains_Mono'] text-xs p-4 resize-none outline-none transition-colors" spellcheck="false">{
+  "filter": {
+    "type": "document",
+    "status": "published",
+    "metadata": {
+      "confidence_threshold": 0.92
+    }
+  }
+}</textarea>
+<div class="absolute top-2 right-2 flex gap-2">
+<span class="px-2 py-0.5 bg-zinc-900 text-zinc-500 font-label-mono text-[8px] border border-zinc-800 uppercase">Valid JSON</span>
+</div>
+</div>
+</div>
+<!-- Advanced Toggles -->
+<div class="pt-4 space-y-3">
+<div class="flex justify-between items-center p-3 border border-zinc-900 hover:border-zinc-800 transition-colors">
+<div class="space-y-0.5">
+<div class="font-label-mono text-xs text-white uppercase tracking-wider">Use reranking</div>
+<div class="font-label-mono text-[9px] text-zinc-600 uppercase">Cross-encoder validation for higher precision</div>
+</div>
+<div class="w-10 h-5 bg-[#12d393] relative cursor-pointer">
+<div class="absolute right-0.5 top-0.5 bottom-0.5 w-4 bg-black"></div>
+</div>
+</div>
+<div class="flex justify-between items-center p-3 border border-zinc-900 hover:border-zinc-800 transition-colors">
+<div class="space-y-0.5">
+<div class="font-label-mono text-xs text-white uppercase tracking-wider">Use ColPali</div>
+<div class="font-label-mono text-[9px] text-zinc-600 uppercase">Visual language model for document layouts</div>
+</div>
+<div class="w-10 h-5 bg-zinc-900 relative cursor-pointer">
+<div class="absolute left-0.5 top-0.5 bottom-0.5 w-4 bg-zinc-700"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Results/Output -->
+<section class="flex flex-col border border-zinc-800 bg-zinc-950/30">
+<!-- Tabbed Header -->
+<div class="flex border-b border-zinc-800">
+<button class="px-8 py-3 font-label-mono text-[11px] uppercase tracking-widest text-zinc-500 border-r border-zinc-800 hover:text-white transition-colors">Code</button>
+<button class="px-8 py-3 font-label-mono text-[11px] uppercase tracking-widest text-[#12d393] border-b-2 border-b-[#12d393] bg-zinc-900/40">Output</button>
+<div class="flex-1"></div>
+<div class="flex items-center px-4 gap-2 border-l border-zinc-800">
+<span class="material-symbols-outlined text-zinc-600 hover:text-white cursor-pointer">content_copy</span>
+<span class="material-symbols-outlined text-zinc-600 hover:text-white cursor-pointer">fullscreen</span>
+</div>
+</div>
+<!-- Content Area: Empty State -->
+<div class="flex-1 flex flex-col items-center justify-center text-center p-12">
+<div class="relative w-24 h-24 mb-6 flex items-center justify-center">
+<div class="absolute inset-0 border border-zinc-900 rotate-45"></div>
+<div class="absolute inset-4 border border-zinc-800 -rotate-12"></div>
+<span class="material-symbols-outlined text-zinc-800 text-4xl">terminal</span>
+</div>
+<h2 class="font-headline-md text-zinc-400 uppercase tracking-widest text-sm mb-2">No output yet</h2>
+<p class="font-label-mono text-[10px] text-zinc-700 max-w-[240px] leading-relaxed">
+                    Configure your search parameters and click 'SEARCH' to visualize semantic relationships and document chunks.
+                </p>
+<!-- Decorative scanner line -->
+<div class="mt-12 w-full max-w-xs h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent relative overflow-hidden">
+<div class="absolute inset-0 bg-[#12d393] w-1/4 animate-pulse opacity-20"></div>
+</div>
+</div>
+<!-- Visual Background Element -->
+<div class="h-64 border-t border-zinc-900 relative overflow-hidden opacity-30 grayscale contrast-125">
+<img alt="Abstract cyber security background" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk2YP8LfTQXtLZy0yFgsxnABtJ_uU7VtJLUkt1140h8N_w5m0XyvLOinpmjuv1-nwPvWY38A-H3YVLFKSxztVpb1Q1GGQMPV0YKIRryq15HasM7T6gdkdweYm4lp3P9v-7MCP-z0iX5Qp8I10d8atRtm-jcp7Re2QxtsbIHVYqtrXD4pUlmH8QMALgTUG5-gN7XxafXqsIHnaq5Wyp36lrkR0QCas-dpEVX7hy5sSoHAtK_OAMOeiabieMPMo53c6ZqYYqZHcF6YZ6"/>
+<div class="absolute inset-0 bg-gradient-to-t from-zinc-950 to-transparent"></div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

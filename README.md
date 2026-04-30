@@ -35,12 +35,12 @@ Traditional RAG approaches that work in proof-of-concepts often fail spectacular
 
 Even worse, these pipelines fundamentally fail at understanding visually rich documents. Charts become meaningless text fragments. Critical diagrams lose their spatial relationships. Tables get mangled into unreadable strings. Technical specifications with mixed text and visuals? Forget about accuracy.
 
-The result is AI applications that confidently return wrong answers because they never truly understood the documents. They miss crucial information embedded in images, misinterpret technical diagrams, and treat visual data as an afterthought. And performance? Watch your infrastructure costs explode as your LLM re-processes the same 500-page manual for every single query.
+The result is AI applications that confidently return wrong answers because they never truly understood the documents. They miss crucial information embedded in images, misinterpret technical diasgrams, and treat visual data as an afterthought. Watch your infrastructure costs explode as your LLM re-processes the same 500-page manual for every single query.
 
 ## What?
-[KNOW-hub] provides developers the tools to ingest, search (deep and shallow), transform, and manage unstructured and multimodal documents. Some of my features include:
+[KNOW-hub] provides developers the tools to ingest, search (deep and shallow), transform, and manage unstructured and multimodal documents. Some of the features include:
 
-- [Multimodal Search]: I employ techniques such as ColPali to build search that actually *understands* the visual content of documents you provide. Search over images, PDFs, videos, and more with a single endpoint.
+- [Multimodal Search]: Employ techniques such as ColPali to build search that actually *understands* the visual content of documents you provide. Search over images, PDFs, videos, and more with a single endpoint.
 - [Fast and Scalable Metadata Extraction]: Extract metadata from documents - including bounding boxes, labeling, classification, and more.
 - [Integrations] Integrate with existing tools and workflows. Including (but not limited to) Google Suite, Slack, and Confluence.
 
@@ -58,8 +58,6 @@ The fastest and easiest way to get started with KNOW-hub is by signing up for fr
 If you'd like to self-host KNOW-hub, you can find the dedicated instruction. I offer options for direct installation and installation via docker.
 
 For local development setup, see [running_locally.md](backend/running_locally.md).
-
-**Important**: Due to limited resources, I cannot provide full support.
 
 ## Using KNOW-hub
 

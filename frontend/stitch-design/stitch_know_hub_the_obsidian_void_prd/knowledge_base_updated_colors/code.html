@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KNOW-hub - Knowledge Base</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;family=Geist:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#FFFFFF",
+          "accent": "#12d393",
+          "background-light": "#f6f8f7",
+          "background-dark": "#000000",
+          "surface": "#0A0A0A",
+          "text-main": "#EDEDED",
+          "muted": "#737373",
+          "border-dark": "#262626",
+          "success": "#12d393",
+          "warning": "#12d393",
+          "danger": "#EF4444",
+        },
+        fontFamily: {
+          "display": ["Space Grotesk", "sans-serif"],
+          "body": ["Geist", "sans-serif"],
+          "mono": ["JetBrains Mono", "monospace"],
+        },
+        borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "0px", "sm": "0px"},
+      },
+    },
+  }
+</script>
+<style>
+  body {
+    background-color: #000000;
+    color: #EDEDED;
+    font-family: 'Geist', sans-serif;
+  }
+  h1, h2, h3, .heading-font {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .mono-font {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .brutal-border {
+    border: 1px solid #262626;
+  }
+  .brutal-border-b {
+    border-bottom: 1px solid #262626;
+  }
+  .brutal-border-t {
+    border-top: 1px solid #262626;
+  }
+  .glass-panel {
+    background: rgba(10, 10, 10, 0.6);
+    backdrop-filter: blur(12px);
+  }
+</style>
+</head>
+<body class="flex min-h-screen bg-background-dark text-text-main overflow-x-hidden">
+<!-- Shared SideNavBar -->
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-[#111816] dark group/design-root overflow-x-hidden" style='font-family: "Space Grotesk", "Noto Sans", sans-serif; max-width: 280px; border-right: 1px solid #262626; background-color: #000000;'>
+<div class="layout-container flex h-full grow flex-col w-full">
+<div class="flex flex-1 justify-center py-5 w-full">
+<div class="layout-content-container flex flex-col w-full flex-1">
+<div class="flex h-full min-h-[700px] flex-col justify-between p-4 bg-background-dark">
+<div class="flex flex-col gap-8 w-full">
+<div class="flex gap-3 px-2 items-center">
+<h1 class="text-white text-xl font-bold leading-normal tracking-tight font-display">KNOW-hub</h1>
+<div class="w-1.5 h-1.5 bg-accent rounded-full"></div>
+</div>
+<div class="flex flex-col gap-1 w-full">
+<a class="flex items-center gap-3 px-3 py-2 text-muted hover:text-white hover:bg-surface transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">house</div>
+<p class="text-sm font-body leading-normal">Home</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-surface text-accent brutal-border" href="#" style="border-left: 2px solid #12d393;">
+<div class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">database</div>
+<p class="text-sm font-body leading-normal font-medium">Knowledge</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-muted hover:text-white hover:bg-surface transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">search</div>
+<p class="text-sm font-body leading-normal">Search</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-muted hover:text-white hover:bg-surface transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">chat</div>
+<p class="text-sm font-body leading-normal">Ask AI</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-muted hover:text-white hover:bg-surface transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">link</div>
+<p class="text-sm font-body leading-normal">Connections</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-muted hover:text-white hover:bg-surface transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">settings</div>
+<p class="text-sm font-body leading-normal">Settings</p>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden bg-background-dark">
+<!-- Header / Toolbar -->
+<header class="flex-shrink-0 border-b border-border-dark bg-background-dark px-8 py-6 flex justify-between items-end">
+<div class="flex flex-col gap-2">
+<h2 class="text-primary tracking-tight text-[32px] font-semibold leading-none font-display">Knowledge Base</h2>
+<p class="text-muted text-sm font-body leading-normal">Manage folders, files, and ingestion states across the vector database.</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 brutal-border bg-transparent hover:bg-surface text-accent transition-colors font-display text-sm font-medium uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]">create_new_folder</span>
+                New Folder
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 brutal-border bg-transparent hover:bg-surface text-accent transition-colors font-display text-sm font-medium uppercase tracking-wider">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+                Upload
+            </button>
+<button class="flex items-center justify-center p-2 brutal-border bg-transparent hover:bg-surface text-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+</div>
+</header>
+<!-- Data Table Container -->
+<div class="flex-1 overflow-auto p-8 bg-background-dark">
+<div class="w-full brutal-border bg-surface">
+<!-- Table Header -->
+<div class="grid grid-cols-12 gap-4 px-6 py-3 brutal-border-b bg-background-dark items-center">
+<div class="col-span-5 text-muted text-xs font-mono uppercase tracking-widest">Name</div>
+<div class="col-span-2 text-muted text-xs font-mono uppercase tracking-widest">Type</div>
+<div class="col-span-2 text-muted text-xs font-mono uppercase tracking-widest text-right">Tokens</div>
+<div class="col-span-1 text-muted text-xs font-mono uppercase tracking-widest">Status</div>
+<div class="col-span-2 text-muted text-xs font-mono uppercase tracking-widest text-right">Last Modified</div>
+</div>
+<!-- Table Body -->
+<div class="flex flex-col w-full">
+<!-- Row 1: Folder -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 brutal-border-b bg-surface hover:bg-[#151515] transition-colors items-center group cursor-pointer">
+<div class="col-span-5 flex items-center gap-3">
+<span class="material-symbols-outlined text-muted text-[20px]">folder</span>
+<span class="text-primary font-body text-sm font-medium">Q3_Financial_Reports_2023</span>
+</div>
+<div class="col-span-2 text-muted font-body text-sm">Directory</div>
+<div class="col-span-2 text-muted font-mono text-sm text-right">--</div>
+<div class="col-span-1">
+<span class="text-accent font-mono text-[11px] tracking-wider">[SYNCED]</span>
+</div>
+<div class="col-span-2 text-muted font-mono text-xs text-right">2023-10-15 09:41</div>
+</div>
+<!-- Row 2: Processing File -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 brutal-border-b bg-surface hover:bg-[#151515] transition-colors items-center group cursor-pointer">
+<div class="col-span-5 flex items-center gap-3">
+<span class="material-symbols-outlined text-muted text-[20px]">description</span>
+<span class="text-primary font-body text-sm font-medium">project_alpha_architecture_v2.pdf</span>
+</div>
+<div class="col-span-2 text-muted font-body text-sm">PDF Document</div>
+<div class="col-span-2 text-muted font-mono text-sm text-right">45,210</div>
+<div class="col-span-1 flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-accent rounded-full animate-pulse"></span>
+<span class="text-accent font-mono text-[11px] tracking-wider">[PROCESSING]</span>
+</div>
+<div class="col-span-2 text-muted font-mono text-xs text-right">2023-10-24 14:22</div>
+</div>
+<!-- Row 3: Synced Text -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 brutal-border-b bg-surface hover:bg-[#151515] transition-colors items-center group cursor-pointer">
+<div class="col-span-5 flex items-center gap-3 ml-6 relative">
+<div class="absolute -left-3 top-1/2 w-2 h-[1px] bg-border-dark"></div>
+<div class="absolute -left-3 -top-6 w-[1px] h-8 bg-border-dark"></div>
+<span class="material-symbols-outlined text-muted text-[20px]">article</span>
+<span class="text-primary font-body text-sm font-medium">meeting_notes_eng_allhands.md</span>
+</div>
+<div class="col-span-2 text-muted font-body text-sm">Markdown</div>
+<div class="col-span-2 text-muted font-mono text-sm text-right">2,845</div>
+<div class="col-span-1">
+<span class="text-accent font-mono text-[11px] tracking-wider">[SYNCED]</span>
+</div>
+<div class="col-span-2 text-muted font-mono text-xs text-right">2023-10-23 11:05</div>
+</div>
+<!-- Row 4: Failed Integration -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 brutal-border-b bg-surface hover:bg-[#151515] transition-colors items-center group cursor-pointer">
+<div class="col-span-5 flex items-center gap-3">
+<span class="material-symbols-outlined text-muted text-[20px]">cloud_sync</span>
+<span class="text-primary font-body text-sm font-medium">confluence_engineering_wiki_sync</span>
+</div>
+<div class="col-span-2 text-muted font-body text-sm">Integration</div>
+<div class="col-span-2 text-muted font-mono text-sm text-right">1.2M</div>
+<div class="col-span-1">
+<span class="text-danger font-mono text-[11px] tracking-wider">[FAILED]</span>
+</div>
+<div class="col-span-2 text-muted font-mono text-xs text-right">2023-10-24 08:00</div>
+</div>
+<!-- Row 5: Synced CSV -->
+<div class="grid grid-cols-12 gap-4 px-6 py-4 bg-surface hover:bg-[#151515] transition-colors items-center group cursor-pointer">
+<div class="col-span-5 flex items-center gap-3">
+<span class="material-symbols-outlined text-muted text-[20px]">table_view</span>
+<span class="text-primary font-body text-sm font-medium">user_metrics_q3_raw.csv</span>
+</div>
+<div class="col-span-2 text-muted font-body text-sm">CSV Data</div>
+<div class="col-span-2 text-muted font-mono text-sm text-right">89,400</div>
+<div class="col-span-1">
+<span class="text-accent font-mono text-[11px] tracking-wider">[SYNCED]</span>
+</div>
+<div class="col-span-2 text-muted font-mono text-xs text-right">2023-10-22 16:45</div>
+</div>
+</div>
+</div>
+<!-- Pagination / Footer Info -->
+<div class="mt-4 flex justify-between items-center px-2">
+<div class="flex items-center gap-2">
+<p class="text-muted font-mono text-xs">Displaying 1-5 of 142 items</p>
+<div class="w-1 h-1 bg-accent rounded-full ml-1"></div>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 brutal-border bg-surface text-muted hover:text-white transition-colors font-mono text-xs disabled:opacity-50" disabled="">PREV</button>
+<button class="px-3 py-1 brutal-border bg-surface text-white hover:bg-[#151515] transition-colors font-mono text-xs">NEXT</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

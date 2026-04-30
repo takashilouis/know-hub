@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KNOW-hub | Home Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#12d393",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#10221c",
+                        "brand-black": "#000000",
+                        "brand-surface": "#0A0A0A",
+                        "brand-border": "#262626",
+                        "brand-text": "#EDEDED",
+                        "brand-muted": "#737373"
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Space Grotesk", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem", 
+                        "lg": "0.25rem", 
+                        "xl": "0.5rem", 
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #000000;
+            color: #EDEDED;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Hide scrollbar for clean brutalist look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #262626;
+            border-radius: 0;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #737373;
+        }
+        
+        .stat-block {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-block:hover {
+            border-color: #12d393;
+            box-shadow: 0 0 10px rgba(18, 211, 147, 0.1);
+        }
+        
+        .list-row {
+            transition: background-color 0.2s ease, padding-left 0.2s ease;
+        }
+        .list-row:hover {
+            background-color: #0A0A0A;
+            padding-left: 0.5rem;
+        }
+        .list-row:hover .file-icon {
+            color: #12d393;
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden bg-brand-black text-brand-text">
+<!-- Shared SideNavBar -->
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-black dark group/design-root overflow-x-hidden" style="font-family: 'Space Grotesk', 'Noto Sans', sans-serif; max-width: 280px; border-right: 1px solid #262626; background-color: #000000;"><div class="layout-container flex h-full grow flex-col w-full">
+<div class="flex flex-1 justify-center py-5 w-full">
+<div class="layout-content-container flex flex-col w-full flex-1">
+<div class="flex h-full min-h-[700px] flex-col justify-between p-4 bg-[#000000]">
+<div class="flex flex-col gap-8 w-full">
+<div class="flex gap-3 px-2 items-center">
+<h1 class="text-white text-xl font-bold leading-normal tracking-tight font-display">KNOW-hub</h1>
+<div class="w-1.5 h-1.5 bg-[#12d393] rounded-full"></div>
+</div>
+<div class="flex flex-col gap-1 w-full">
+<a class="flex items-center gap-3 px-3 py-2 bg-[#0A0A0A] text-[#12d393] border border-[#262626]" href="#" style="border-left: 2px solid #12d393;">
+<div class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">house</div>
+<p class="text-sm font-body leading-normal font-medium">Home</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">database</div>
+<p class="text-sm font-body leading-normal">Knowledge</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">search</div>
+<p class="text-sm font-body leading-normal">Search</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">chat</div>
+<p class="text-sm font-body leading-normal">Ask AI</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">link</div>
+<p class="text-sm font-body leading-normal">Connections</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<div class="material-symbols-outlined text-[20px]">settings</div>
+<p class="text-sm font-body leading-normal">Settings</p>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></div>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full overflow-y-auto relative bg-brand-black">
+<!-- Subtle gradient background effect -->
+<div class="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+<div class="max-w-[1200px] w-full mx-auto p-8 lg:p-12 flex flex-col gap-12 z-10">
+<!-- Hero Section -->
+<header class="flex flex-col gap-6 pt-4">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-8 bg-primary"></div>
+<h1 class="text-4xl font-semibold tracking-[-0.04em] text-white">System Intelligence Active</h1>
+</div>
+<!-- Global Search -->
+<div class="relative group mt-4">
+<div class="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none">
+<span class="material-symbols-outlined text-brand-muted text-[28px] group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="w-full h-[64px] bg-brand-surface border border-brand-border rounded focus:ring-1 focus:ring-primary focus:border-primary text-white pl-[68px] pr-24 text-lg font-body placeholder:text-brand-muted/70 transition-all shadow-none" placeholder="Search the Obsidian Void..." type="text"/>
+<div class="absolute inset-y-0 right-0 flex items-center pr-6 pointer-events-none">
+<div class="flex gap-1 items-center bg-brand-black border border-brand-border px-2 py-1 rounded-sm">
+<span class="mono text-xs text-brand-muted">⌘K</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Vitals Row -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Stat Block 1 -->
+<div class="stat-block bg-brand-surface border border-brand-border rounded p-6 h-[120px] flex flex-col justify-between cursor-default">
+<div class="flex justify-between items-start">
+<h3 class="mono text-xs text-brand-muted uppercase tracking-widest">Total Indexed Files</h3>
+<span class="material-symbols-outlined text-brand-muted/50 text-[18px]">description</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-semibold text-white tracking-[-0.02em]">14,208</span>
+<span class="text-primary mono text-xs">+12 today</span>
+</div>
+</div>
+<!-- Stat Block 2 -->
+<div class="stat-block bg-brand-surface border border-brand-border rounded p-6 h-[120px] flex flex-col justify-between cursor-default">
+<div class="flex justify-between items-start">
+<h3 class="mono text-xs text-brand-muted uppercase tracking-widest">Vector Embeddings</h3>
+<span class="material-symbols-outlined text-brand-muted/50 text-[18px]">data_array</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-semibold text-white tracking-[-0.02em]">2.4M</span>
+<span class="text-brand-muted mono text-xs">Dimensionality 1536</span>
+</div>
+</div>
+<!-- Stat Block 3 -->
+<div class="stat-block bg-brand-surface border border-brand-border rounded p-6 h-[120px] flex flex-col justify-between cursor-default">
+<div class="flex justify-between items-start">
+<h3 class="mono text-xs text-brand-muted uppercase tracking-widest">Active Pipelines</h3>
+<span class="material-symbols-outlined text-brand-muted/50 text-[18px]">account_tree</span>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-semibold text-white tracking-[-0.02em]">04</span>
+<div class="flex gap-1 ml-2">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-brand-border mt-2"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Split -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-4">
+<!-- Quick Actions (Left) -->
+<div class="lg:col-span-4 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-2 border-b border-brand-border">
+<h2 class="text-sm uppercase tracking-widest mono text-brand-muted">Command Actions</h2>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<button class="flex items-center justify-between px-4 py-3 bg-brand-surface border border-brand-border hover:border-primary text-white rounded transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-muted group-hover:text-primary transition-colors text-[20px]">upload</span>
+<span class="font-medium text-sm">Ingest Document</span>
+</div>
+<span class="mono text-[10px] text-brand-muted opacity-0 group-hover:opacity-100 transition-opacity">⌘ U</span>
+</button>
+<button class="flex items-center justify-between px-4 py-3 bg-brand-surface border border-brand-border hover:border-primary text-white rounded transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-muted group-hover:text-primary transition-colors text-[20px]">sync</span>
+<span class="font-medium text-sm">Force DB Sync</span>
+</div>
+</button>
+<button class="flex items-center justify-between px-4 py-3 bg-brand-surface border border-brand-border hover:border-primary text-white rounded transition-colors group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-brand-muted group-hover:text-primary transition-colors text-[20px]">add_link</span>
+<span class="font-medium text-sm">New Pipeline</span>
+</div>
+</button>
+</div>
+</div>
+<!-- Recent Ingestions (Right) -->
+<div class="lg:col-span-8 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-2 border-b border-brand-border">
+<h2 class="text-sm uppercase tracking-widest mono text-brand-muted">Recent Ingestions</h2>
+<a class="text-xs mono text-primary hover:underline" href="#">View All →</a>
+</div>
+<div class="flex flex-col border border-brand-border rounded bg-brand-black">
+<!-- List Item 1 -->
+<div class="list-row flex items-center justify-between px-4 py-3 border-b border-brand-border cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined file-icon text-brand-muted text-[20px]">picture_as_pdf</span>
+<span class="font-medium text-white text-sm truncate max-w-[200px] sm:max-w-xs">Q3_Financial_Analysis_v2.pdf</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="mono text-[10px] px-2 py-0.5 rounded border border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10">SYNCED</span>
+<span class="mono text-xs text-brand-muted w-24 text-right">10:42 AM</span>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="list-row flex items-center justify-between px-4 py-3 border-b border-brand-border cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined file-icon text-brand-muted text-[20px]">integration_instructions</span>
+<span class="font-medium text-white text-sm truncate max-w-[200px] sm:max-w-xs">api_v3_documentation.md</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="mono text-[10px] px-2 py-0.5 rounded border border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10">SYNCED</span>
+<span class="mono text-xs text-brand-muted w-24 text-right">09:15 AM</span>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="list-row flex items-center justify-between px-4 py-3 border-b border-brand-border cursor-pointer bg-brand-surface/30">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined file-icon text-[#F59E0B] text-[20px] animate-pulse">donut_large</span>
+<span class="font-medium text-white text-sm truncate max-w-[200px] sm:max-w-xs">customer_interviews_raw.csv</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="mono text-[10px] px-2 py-0.5 rounded border border-[#F59E0B]/30 text-[#F59E0B] bg-[#F59E0B]/10">PROCESSING</span>
+<span class="mono text-xs text-brand-muted w-24 text-right">08:30 AM</span>
+</div>
+</div>
+<!-- List Item 4 -->
+<div class="list-row flex items-center justify-between px-4 py-3 border-b border-brand-border cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined file-icon text-brand-muted text-[20px]">text_snippet</span>
+<span class="font-medium text-white text-sm truncate max-w-[200px] sm:max-w-xs">engineering_guidelines.txt</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="mono text-[10px] px-2 py-0.5 rounded border border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10">SYNCED</span>
+<span class="mono text-xs text-brand-muted w-24 text-right">Yesterday</span>
+</div>
+</div>
+<!-- List Item 5 -->
+<div class="list-row flex items-center justify-between px-4 py-3 cursor-pointer">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined file-icon text-[#EF4444] text-[20px]">error</span>
+<span class="font-medium text-white text-sm truncate max-w-[200px] sm:max-w-xs">corrupted_archive.zip</span>
+</div>
+<div class="flex items-center gap-6">
+<span class="mono text-[10px] px-2 py-0.5 rounded border border-[#EF4444]/30 text-[#EF4444] bg-[#EF4444]/10">FAILED</span>
+<span class="mono text-xs text-brand-muted w-24 text-right">Yesterday</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>

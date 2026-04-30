@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KNOW-hub - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Geist:wght@300..700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#12d393",
+          "background-light": "#f6f8f7",
+          "background-dark": "#000000",
+          "surface-dark": "#0A0A0A",
+          "border-dark": "#262626",
+          "text-main": "#EDEDED",
+          "text-muted": "#737373",
+          "kh-black": "#000000",
+          "kh-surface": "#0A0A0A",
+          "kh-text": "#EDEDED",
+          "kh-muted": "#737373",
+          "kh-border": "#262626",
+        },
+        fontFamily: {
+          "display": ["Space Grotesk", "sans-serif"],
+          "body": ["Geist", "sans-serif"],
+          "mono": ["JetBrains Mono", "monospace"]
+        },
+        borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "0px", "sm": "0px"},
+      },
+    },
+  }
+</script>
+<style>
+  * {
+    border-radius: 0 !important;
+  }
+  body {
+    background-color: theme('colors.background-dark');
+    color: theme('colors.text-main');
+    font-family: theme('fontFamily.body');
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: theme('fontFamily.display');
+    letter-spacing: -0.04em;
+  }
+  .mono-label {
+    font-family: theme('fontFamily.mono');
+  }
+  .nav-active {
+    background-color: #0A0A0A;
+    color: #12d393;
+    border: 1px solid #262626;
+    border-left: 2px solid #12d393;
+  }
+</style>
+</head>
+<body class="h-screen flex overflow-hidden antialiased">
+<!-- SideNavBar (Shared Component) -->
+<div class="relative flex h-full w-[280px] flex-col bg-black border-r border-kh-border flex-shrink-0 transition-all duration-300 z-50">
+<div class="flex flex-col h-full justify-between p-4 bg-[#000000]">
+<div class="flex flex-col gap-8 w-full">
+<div class="flex gap-3 px-2 items-center">
+<h1 class="text-white text-xl font-bold leading-normal tracking-tight font-display">KNOW-hub</h1>
+<div class="w-1.5 h-1.5 bg-[#12d393] rounded-full"></div>
+</div>
+<nav class="flex flex-col gap-1 w-full">
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">house</span>
+<p class="text-sm font-display font-medium leading-normal">Home</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">database</span>
+<p class="text-sm font-display font-medium leading-normal">Knowledge</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">search</span>
+<p class="text-sm font-display font-medium leading-normal">Search</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+<p class="text-sm font-display font-medium leading-normal">Ask AI</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#737373] hover:text-white hover:bg-[#0A0A0A] transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">link</span>
+<p class="text-sm font-display font-medium leading-normal">Connections</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 nav-active" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">settings</span>
+<p class="text-sm font-display font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="flex items-center justify-between border-t border-kh-border pt-4 mt-auto">
+<div class="flex items-center gap-3">
+<div class="size-8 bg-kh-surface border border-kh-border flex items-center justify-center">
+<span class="text-kh-muted font-mono text-xs">OP</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-mono text-kh-text">Admin</span>
+<span class="text-[10px] text-kh-muted uppercase tracking-tighter">System Active</span>
+</div>
+</div>
+<button class="text-kh-muted hover:text-white transition-colors">
+<span class="material-symbols-outlined text-xl">keyboard_double_arrow_left</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col h-full bg-background-dark overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-border-dark flex items-center px-8 flex-shrink-0 bg-surface-dark/50 backdrop-blur-sm">
+<h2 class="text-2xl font-semibold text-text-main">System Configuration</h2>
+</header>
+<!-- Settings Layout -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Inner Tabs -->
+<div class="w-[200px] border-r border-border-dark bg-background-dark p-6 flex-shrink-0 overflow-y-auto">
+<nav class="flex flex-col gap-2">
+<a class="px-3 py-2 text-sm font-medium text-text-main border-l-2 border-primary bg-surface-dark" href="#">API Keys</a>
+<a class="px-3 py-2 text-sm font-medium text-text-muted hover:text-text-main hover:bg-surface-dark border-l-2 border-transparent transition-colors" href="#">Models</a>
+<a class="px-3 py-2 text-sm font-medium text-text-muted hover:text-text-main hover:bg-surface-dark border-l-2 border-transparent transition-colors" href="#">Configuration</a>
+<a class="px-3 py-2 text-sm font-medium text-text-muted hover:text-text-main hover:bg-surface-dark border-l-2 border-transparent transition-colors" href="#">Usage</a>
+</nav>
+</div>
+<!-- Form Content -->
+<div class="flex-1 overflow-y-auto p-10 bg-background-dark">
+<div class="max-w-3xl">
+<div class="mb-8">
+<h3 class="text-xl font-medium text-text-main mb-2">API Configuration</h3>
+<p class="text-text-muted text-sm">Manage access keys for external intelligence providers. Changes take effect immediately across all pipelines.</p>
+</div>
+<form class="space-y-8">
+<!-- OpenAI Key Group -->
+<div class="space-y-4 pb-8 border-b border-border-dark">
+<div class="flex justify-between items-end">
+<label class="block text-xs uppercase mono-label text-text-muted tracking-wider">OpenAI API Key</label>
+<span class="text-[10px] text-green-500 font-mono">[VALIDATED]</span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-dark border border-border-dark px-4 py-3 text-sm text-text-main font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-text-muted" placeholder="sk-..." type="password" value="sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility_off</span>
+</button>
+</div>
+<p class="text-xs text-text-muted font-mono">Used for GPT-4o and embedding generation.</p>
+</div>
+<!-- Anthropic Key Group -->
+<div class="space-y-4 pb-8 border-b border-border-dark">
+<div class="flex justify-between items-end">
+<label class="block text-xs uppercase mono-label text-text-muted tracking-wider">Anthropic API Key</label>
+<span class="text-[10px] text-text-muted font-mono">[NOT SET]</span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-dark border border-border-dark px-4 py-3 text-sm text-text-main font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-text-muted/50" placeholder="sk-ant-..." type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+<p class="text-xs text-text-muted font-mono">Required for Claude 3.5 Sonnet integration.</p>
+</div>
+<!-- Local Model Group -->
+<div class="space-y-4 pb-8 border-b border-border-dark">
+<label class="block text-xs uppercase mono-label text-text-muted tracking-wider">Local Inference URL</label>
+<input class="w-full bg-surface-dark border border-border-dark px-4 py-3 text-sm text-text-main font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-text-muted" type="text" value="http://localhost:11434/v1"/>
+<p class="text-xs text-text-muted font-mono">Endpoint for Ollama or vLLM deployments.</p>
+</div>
+<!-- Default Model Selection -->
+<div class="space-y-4 pb-8 border-b border-border-dark">
+<label class="block text-xs uppercase mono-label text-text-muted tracking-wider">System Default Model</label>
+<div class="relative">
+<select class="w-full bg-surface-dark border border-border-dark px-4 py-3 text-sm text-text-main font-mono focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
+<option value="gpt-4o">GPT-4o (OpenAI)</option>
+<option value="claude-3-5-sonnet">Claude 3.5 Sonnet (Anthropic)</option>
+<option value="llama-3">Llama 3 70B (Local)</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-text-muted">
+<span class="material-symbols-outlined text-[20px]">arrow_drop_down</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex justify-end pt-4">
+<button class="px-6 py-3 bg-white text-black font-display font-medium text-sm tracking-widest uppercase hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark" type="button">
+                Save Configuration
+              </button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</main>
+</body></html>

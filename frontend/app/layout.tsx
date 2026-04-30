@@ -23,20 +23,32 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Knowledge Hub",
-  description: "Internal Knowledge Hub — Search, explore, and ask questions across your organization's documents",
+  title: "KNOW-hub | The Obsidian Void",
+  description: "Enterprise-grade knowledge engine — Search, explore, and query across your organization's intelligence.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Server-side read of sidebar cookie to avoid SSR flicker
   const sidebarCookie = cookies().get("sidebar_state")?.value;
   const defaultOpen = sidebarCookie === undefined ? true : sidebarCookie === "true";
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="min-h-screen bg-sidebar">
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        {/* Obsidian Void typography stack */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-kh-black text-kh-text`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+          <div className="min-h-screen bg-kh-black">
             <MorphikProvider>
               <HeaderProvider>
                 <ChatProvider>
@@ -44,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     defaultOpen={defaultOpen}
                     style={
                       {
-                        "--sidebar-width": "calc(var(--spacing) * 72)",
+                        "--sidebar-width": "calc(var(--spacing) * 70)",
                         "--header-height": "calc(var(--spacing) * 12)",
                       } as React.CSSProperties
                     }

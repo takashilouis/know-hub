@@ -2,116 +2,158 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  height: 100%;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   KNOW-hub: The Obsidian Void — Design System
+   Inspired by Grok (xAI) + Linear. Brutalist high-tech.
+───────────────────────────────────────────────────────────────────────────── */
 
 @layer base {
   :root {
     --spacing: 0.25rem;
 
-    /* Content area */
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* Obsidian Void tokens */
+    --color-primary:    #12d393;
+    --color-background: #000000;
+    --color-surface:    #0A0A0A;
+    --color-text:       #EDEDED;
+    --color-muted:      #737373;
+    --color-border:     #262626;
+    --color-success:    #12d393;
+    --color-warning:    #F59E0B;
+    --color-danger:     #EF4444;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    /* Mapped to shadcn CSS-var system */
+    --background:              0 0% 0%;
+    --foreground:              0 0% 93%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --card:                    0 0% 4%;
+    --card-foreground:         0 0% 93%;
 
-    /* Primary accent — blue-600, no purple */
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
+    --popover:                 0 0% 4%;
+    --popover-foreground:      0 0% 93%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --primary:                 158 82% 45%;
+    --primary-foreground:      0 0% 0%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --secondary:               0 0% 6%;
+    --secondary-foreground:    0 0% 93%;
 
-    --accent: 213 94% 96%;
-    --accent-foreground: 221 83% 43%;
+    --muted:                   0 0% 6%;
+    --muted-foreground:        0 0% 45%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --accent:                  0 0% 6%;
+    --accent-foreground:       0 0% 93%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --destructive:             0 84% 60%;
+    --destructive-foreground:  0 0% 98%;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border:                  0 0% 15%;
+    --input:                   0 0% 15%;
+    --ring:                    158 82% 45%;
 
-    --radius: 0.5rem;
+    --radius: 0px;
 
-    /* Sidebar — dark navy */
-    --sidebar: 222 47% 11%;
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 215 20% 72%;
-    --sidebar-primary: 217 91% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 17%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 222 47% 18%;
-    --sidebar-ring: 217 91% 65%;
+    /* Sidebar — same obsidian surface */
+    --sidebar:                    0 0% 0%;
+    --sidebar-background:         0 0% 0%;
+    --sidebar-foreground:         0 0% 45%;
+    --sidebar-primary:            158 82% 45%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent:             0 0% 6%;
+    --sidebar-accent-foreground:  0 0% 93%;
+    --sidebar-border:             0 0% 15%;
+    --sidebar-ring:               158 82% 45%;
+  }
+}
+
+/* Force dark — no light mode for Obsidian Void */
+html, body {
+  height: 100%;
+  background-color: #000000;
+  color: #EDEDED;
+}
+
+/* Global zero border-radius */
+*, *::before, *::after {
+  border-radius: 0 !important;
+}
+
+/* ── Typography defaults ── */
+body {
+  font-family: 'Geist', 'GeistVF', var(--font-geist-sans), sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -0.04em;
+}
+
+/* ── Terminal-style scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #737373;
+}
+
+/* ── Utility classes from design HTML files ── */
+@layer utilities {
+  .font-display  { font-family: 'Space Grotesk', sans-serif; }
+  .font-body     { font-family: 'Geist', var(--font-geist-sans), sans-serif; }
+  .font-mono     { font-family: 'JetBrains Mono', var(--font-geist-mono), monospace; }
+
+  .brutal-border   { border: 1px solid #262626; }
+  .brutal-border-b { border-bottom: 1px solid #262626; }
+  .brutal-border-t { border-top: 1px solid #262626; }
+  .brutal-border-r { border-right: 1px solid #262626; }
+  .brutal-border-l { border-left: 1px solid #262626; }
+
+  .glass-panel {
+    background: rgba(10, 10, 10, 0.6);
+    backdrop-filter: blur(12px);
   }
 
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 96%;
-
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 96%;
-
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 96%;
-
-    --primary: 217 91% 65%;
-    --primary-foreground: 222 47% 6%;
-
-    --secondary: 222 47% 14%;
-    --secondary-foreground: 210 40% 96%;
-
-    --muted: 222 47% 14%;
-    --muted-foreground: 215 16% 57%;
-
-    --accent: 222 47% 14%;
-    --accent-foreground: 217 91% 65%;
-
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 222 47% 18%;
-    --input: 222 47% 18%;
-    --ring: 217 91% 65%;
-
-    --chart-1: 217 91% 65%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 43 74% 55%;
-    --chart-5: 340 75% 55%;
-
-    --sidebar: 222 47% 6%;
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 215 20% 70%;
-    --sidebar-primary: 217 91% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 12%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 222 47% 14%;
-    --sidebar-ring: 217 91% 65%;
+  .nav-active {
+    background-color: #0A0A0A;
+    color: #12d393;
+    border: 1px solid #262626;
+    border-left: 2px solid #12d393;
   }
+
+  .stat-block {
+    transition: border-color 0.2s ease;
+  }
+  .stat-block:hover {
+    border-color: #12d393;
+  }
+
+  .list-row {
+    transition: background-color 0.15s ease, padding-left 0.15s ease;
+  }
+  .list-row:hover {
+    background-color: #0A0A0A;
+    padding-left: 0.5rem;
+  }
+
+  /* Citation tooltip */
+  .citation-group:hover .citation-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-4px) translateX(-50%);
+  }
+  .citation-tooltip {
+    transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  }
+
+  .text-balance { text-wrap: balance; }
 }
 
 @layer base {

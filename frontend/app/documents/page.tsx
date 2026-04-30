@@ -7,8 +7,45 @@ import DocumentsSection from "@/components/documents/DocumentsSection";
 import { useMorphik } from "@/contexts/morphik-context";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useHeader } from "@/contexts/header-context";
-import { Button } from "@/components/ui/button";
-import { Trash2, Upload, RefreshCw, PlusCircle } from "lucide-react";
+
+/* ── Obsidian Void toolbar button ── */
+function ObsidianButton({
+  onClick,
+  icon,
+  label,
+  danger = false,
+}: {
+  onClick: () => void;
+  icon: string;
+  label: string;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 border bg-transparent px-4 py-2 font-display text-sm font-medium uppercase tracking-wider transition-colors hover:bg-kh-surface ${
+        danger
+          ? "border-kh-danger/50 text-kh-danger hover:border-kh-danger"
+          : "border-kh-border text-kh-accent hover:border-kh-accent"
+      }`}
+    >
+      <span className="material-symbols-outlined text-[18px]">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+function ObsidianIconButton({ onClick, icon, title }: { onClick: () => void; icon: string; title: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className="flex items-center justify-center border border-kh-border bg-transparent p-2 text-kh-text transition-colors hover:bg-kh-surface hover:border-kh-accent"
+    >
+      <span className="material-symbols-outlined text-[18px]">{icon}</span>
+    </button>
+  );
+}
 
 function DocumentsContent() {
   const { apiBaseUrl, authToken } = useMorphik();
@@ -22,126 +59,49 @@ function DocumentsContent() {
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
-  // Sync folder state with URL param changes
   useEffect(() => {
     setCurrentFolder(folderParam);
   }, [folderParam]);
 
-  // Update header breadcrumbs and controls when folder changes
   useEffect(() => {
     const breadcrumbs = [
       { label: "Home", href: "/" },
       {
         label: "Knowledge Base",
-        ...(currentFolder
-          ? {
-              href: "/documents",
-            }
-          : {}),
+        ...(currentFolder ? { href: "/documents" } : {}),
       },
       ...(currentFolder
-        ? [
-            {
-              label: currentFolder === "all" ? "All Documents" : currentFolder,
-            },
-          ]
+        ? [{ label: currentFolder === "all" ? "All Documents" : currentFolder }]
         : []),
     ];
-
     setCustomBreadcrumbs(breadcrumbs);
 
-    // Set right content based on current view
-    const rightContent = currentFolder ? (
-      // Folder view controls
+    /* ── Obsidian Void toolbar buttons ── */
+    const rightContent = (
       <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            const event = new CustomEvent("openNewFolderDialog");
-            window.dispatchEvent(event);
-          }}
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Folder
-        </Button>
+        <ObsidianButton
+          onClick={() => window.dispatchEvent(new CustomEvent("openNewFolderDialog"))}
+          icon="create_new_folder"
+          label="New Folder"
+        />
         {selectedDocuments.length > 0 && (
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              const event = new CustomEvent("deleteMultipleDocuments");
-              window.dispatchEvent(event);
-            }}
-            className="h-8 w-8 border-red-200 text-red-500 hover:border-red-300 hover:bg-red-50"
-            title={`Delete ${selectedDocuments.length} selected document${selectedDocuments.length > 1 ? "s" : ""}`}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <ObsidianButton
+            onClick={() => window.dispatchEvent(new CustomEvent("deleteMultipleDocuments"))}
+            icon="delete"
+            label={`Delete (${selectedDocuments.length})`}
+            danger
+          />
         )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            // Trigger refresh event
-            window.location.reload();
-          }}
+        <ObsidianIconButton
+          onClick={() => window.location.reload()}
+          icon="refresh"
           title="Refresh documents"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span className="ml-1">Refresh</span>
-        </Button>
-
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => {
-            const event = new CustomEvent("openUploadDialog");
-            window.dispatchEvent(event);
-          }}
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Upload
-        </Button>
-      </>
-    ) : (
-      // Root level controls
-      <>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            const event = new CustomEvent("openNewFolderDialog");
-            window.dispatchEvent(event);
-          }}
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          New Folder
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            // Trigger refresh event
-            window.location.reload();
-          }}
-          title="Refresh documents"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span className="ml-1">Refresh</span>
-        </Button>
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => {
-            const event = new CustomEvent("openUploadDialog");
-            window.dispatchEvent(event);
-          }}
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          Upload
-        </Button>
+        />
+        <ObsidianButton
+          onClick={() => window.dispatchEvent(new CustomEvent("openUploadDialog"))}
+          icon="upload"
+          label="Upload"
+        />
       </>
     );
 
@@ -153,19 +113,12 @@ function DocumentsContent() {
     };
   }, [currentFolder, router, selectedDocuments, setCustomBreadcrumbs, setRightContent]);
 
-  // Listen for events from DocumentsSection
   useEffect(() => {
     const handleSelectionChange = (event: CustomEvent<{ selectedDocuments?: string[] }>) => {
       setSelectedDocuments(event.detail?.selectedDocuments || []);
     };
-
-    const handleOpenNewFolderDialog = () => {
-      setShowNewFolderDialog(true);
-    };
-
-    const handleOpenUploadDialog = () => {
-      setShowUploadDialog(true);
-    };
+    const handleOpenNewFolderDialog = () => setShowNewFolderDialog(true);
+    const handleOpenUploadDialog = () => setShowUploadDialog(true);
 
     window.addEventListener("documentsSelectionChanged", handleSelectionChange as EventListener);
     window.addEventListener("openNewFolderDialog", handleOpenNewFolderDialog);
@@ -178,7 +131,6 @@ function DocumentsContent() {
     };
   }, []);
 
-  // Handle folder navigation
   const handleFolderClick = (folderName: string | null) => {
     setCurrentFolder(folderName);
     if (folderName) {
@@ -212,7 +164,13 @@ function DocumentsContent() {
 
 export default function DocumentsPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center p-12">
+        <div className="font-mono text-xs uppercase tracking-widest text-kh-muted animate-pulse">
+          Loading Knowledge Base...
+        </div>
+      </div>
+    }>
       <DocumentsContent />
     </Suspense>
   );
