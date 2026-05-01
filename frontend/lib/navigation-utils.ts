@@ -1,4 +1,4 @@
-import { IconFiles, IconSearch, IconMessage, IconSettings, IconLayoutDashboard } from "@tabler/icons-react";
+import { IconDatabase, IconSearch, IconMessage, IconSettings, IconLayoutDashboard } from "@tabler/icons-react";
 
 export interface BaseNavItem {
   title: string;
@@ -33,7 +33,7 @@ export const baseMainNavItems: Omit<BaseNavItem, "type">[] = [
   },
   {
     title: "Knowledge Base",
-    icon: IconFiles,
+    icon: IconDatabase,
   },
   {
     title: "Search",

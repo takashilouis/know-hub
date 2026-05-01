@@ -515,7 +515,7 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
   };
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border overflow-hidden">
       <div className="sticky top-0 flex items-center justify-between border-b bg-muted px-4 py-3">
         <h3 className="text-sm font-semibold">Document Details</h3>
         <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-background/80">
@@ -537,11 +537,11 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
         </Button>
       </div>
 
-      <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="space-y-4 p-4">
+      <ScrollArea className="h-[calc(100vh-200px)] overflow-x-hidden">
+        <div className="max-w-full space-y-4 p-4">
           <div>
             <h3 className="mb-1 font-medium">Filename</h3>
-            <p>{selectedDocument.filename || "N/A"}</p>
+            <p className="break-all">{selectedDocument.filename || "N/A"}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -662,10 +662,10 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
             <h3 className="mb-1 font-medium">Document ID</h3>
             <button
               onClick={copyDocumentId}
-              className="group flex items-center gap-2 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="group flex w-full items-center gap-2 font-mono text-xs text-muted-foreground transition-colors hover:text-foreground"
               title="Click to copy Document ID"
             >
-              <span>{selectedDocument.external_id}</span>
+              <span className="truncate">{selectedDocument.external_id}</span>
               {copiedDocumentId ? (
                 <Check className="h-3 w-3 text-green-500" />
               ) : (
@@ -710,15 +710,15 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
               )}
             </div>
 
-            <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="max-w-full overflow-hidden rounded-lg border bg-muted/30 p-3">
               {!isEditingMetadata ? (
                 // View mode
                 <div className="space-y-2">
                   {selectedDocument.metadata && Object.keys(selectedDocument.metadata).length > 0 ? (
                     Object.entries(selectedDocument.metadata).map(([key, value]) => (
-                      <div key={key} className="flex items-start gap-2">
-                        <span className="min-w-[120px] text-sm font-medium">{key}:</span>
-                        <span className="break-all text-sm text-muted-foreground">
+                      <div key={key} className="flex items-start gap-2 min-w-0">
+                        <span className="shrink-0 min-w-[80px] max-w-[120px] text-sm font-medium truncate">{key}:</span>
+                        <span className="break-all text-sm text-muted-foreground min-w-0">
                           {typeof value === "object" ? JSON.stringify(value) : String(value)}
                         </span>
                       </div>
@@ -767,7 +767,7 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
             <AccordionItem value="system-metadata">
               <AccordionTrigger>Text Content</AccordionTrigger>
               <AccordionContent>
-                <pre className="overflow-x-auto whitespace-pre-wrap rounded bg-muted p-2 text-xs">
+                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap break-words rounded bg-muted p-2 text-xs">
                   {JSON.stringify(selectedDocument.system_metadata.content, null, 2)}
                 </pre>
               </AccordionContent>

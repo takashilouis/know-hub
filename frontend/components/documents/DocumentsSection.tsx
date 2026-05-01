@@ -1626,7 +1626,7 @@ const DocumentsSection = React.forwardRef<
           </div>
 
           {selectedDocument && (
-            <div className="w-full duration-300 animate-in slide-in-from-right md:w-1/3">
+            <div className="min-w-0 w-full duration-300 animate-in slide-in-from-right md:w-1/3">
               <DocumentDetail
                 selectedDocument={selectedDocument}
                 handleDeleteDocument={handleDeleteDocument}

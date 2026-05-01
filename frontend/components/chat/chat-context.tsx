@@ -25,19 +25,11 @@ export function useChatContext() {
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [showChatView, setShowChatView] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const onChatPage = window.location.pathname === "/chat";
-    const manuallyHidden = sessionStorage.getItem("chatViewManuallyHidden") === "true";
-    return onChatPage && !manuallyHidden;
-  });
+  // Always start false on both server and client to avoid hydration mismatch.
+  // SidebarContainer's useEffect will set the correct value after mount.
+  const [showChatView, setShowChatView] = useState<boolean>(false);
   const [activeChatId, setActiveChatId] = useState<string | undefined>();
-  const [showSettingsView, setShowSettingsView] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const onSettingsPage = window.location.pathname === "/settings";
-    const manuallyHidden = sessionStorage.getItem("settingsViewManuallyHidden") === "true";
-    return onSettingsPage && !manuallyHidden;
-  });
+  const [showSettingsView, setShowSettingsView] = useState<boolean>(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState("api-keys");
 
   const setActiveChatIdMemo = useCallback((id: string | undefined) => {

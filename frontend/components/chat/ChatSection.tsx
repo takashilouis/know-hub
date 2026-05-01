@@ -50,16 +50,20 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   const { models: serverModels, refresh: refreshServerModels } = useModels(apiBaseUrl, authToken);
   const { theme } = useTheme();
 
-  // Generate a stable chatId when no active chat is selected
-  const [fallbackChatId] = useState(() => generateUUID());
+  // Generate a stable chatId when no active chat is selected.
+  // Start with a placeholder so server and client render the same initial HTML,
+  // then replace with a real UUID after mount to avoid hydration mismatch.
+  const [fallbackChatId, setFallbackChatId] = useState("new");
   const chatId = activeChatId || fallbackChatId;
 
-  // Set the fallback as active if no chat is currently active
   useEffect(() => {
-    if (!activeChatId && fallbackChatId) {
-      setActiveChatId(fallbackChatId);
+    const id = generateUUID();
+    setFallbackChatId(id);
+    if (!activeChatId) {
+      setActiveChatId(id);
     }
-  }, [activeChatId, fallbackChatId, setActiveChatId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // State for streaming toggle
   const [streamingEnabled, setStreamingEnabled] = useState(true);
@@ -486,7 +490,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
             >
               {selectedModel === "default" || !selectedModel ? (
                 <>
-                  <span className="mr-1.5 text-base">🤖</span>
+                  <span className="material-symbols-outlined mr-1 text-[18px] text-kh-accent">auto_awesome</span>
                   <span>Default</span>
                 </>
               ) : (
@@ -520,7 +524,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                       setShowModelSelector(false);
                     }}
                   >
-                    <span className="text-base">🤖</span>
+                    <span className="material-symbols-outlined text-[20px] text-kh-accent">auto_awesome</span>
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium">Default</span>
@@ -601,7 +605,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                       }
                     }}
                     disabled={isReadonly || status === "loading"}
-                    className="min-h-[120px] resize-none border-0 bg-transparent px-4 pb-16 pt-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="min-h-[120px] resize-none border-0 bg-transparent px-4 pb-14 pt-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                     style={{ height: "auto" }}
                   />
 
@@ -609,8 +613,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                   {!isReadonly && (
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-border/50 p-3">
                       {/* Left side - Document and Folder Selection */}
-                      <div className="mr-4 flex flex-1 flex-wrap items-center gap-2">
-                        <div className="flex-1">
+                      <div className="mr-4 flex min-w-0 flex-1 items-center gap-2">
+                        <div className="min-w-0 flex-1">
                           <DocumentSelector
                             documents={documents}
                             folders={folderOptions}
@@ -834,7 +838,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                     placeholder="Send a message..."
                     value={input}
                     onChange={handleInput}
-                    className="min-h-[120px] resize-none border-0 bg-transparent px-4 pb-16 pt-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="min-h-[120px] resize-none border-0 bg-transparent px-4 pb-14 pt-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                     autoFocus
                     onKeyDown={event => {
                       if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -852,8 +856,8 @@ const ChatSection: React.FC<ChatSectionProps> = ({
                   {!isReadonly && (
                     <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-border/50 p-3">
                       {/* Left side - Document and Folder Selection */}
-                      <div className="mr-4 flex flex-1 flex-wrap items-center gap-2">
-                        <div className="flex-1">
+                      <div className="mr-4 flex min-w-0 flex-1 items-center gap-2">
+                        <div className="min-w-0 flex-1">
                           <DocumentSelector
                             documents={documents}
                             folders={folderOptions}

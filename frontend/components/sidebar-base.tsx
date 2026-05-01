@@ -37,12 +37,13 @@ interface BaseSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 /* ── Icon map from HTML designs ── */
 const NAV_ICONS: Record<string, string> = {
-  Home:        "house",
-  Knowledge:   "database",
-  Search:      "search",
-  "Ask AI":    "chat",
-  Connections: "link",
-  Settings:    "settings",
+  Home:             "house",
+  "Knowledge Base": "database",
+  Knowledge:        "database",
+  Search:           "search",
+  "Ask AI":         "chat",
+  Connections:      "link",
+  Settings:         "settings",
 };
 
 export function BaseSidebar({
