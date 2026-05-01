@@ -105,8 +105,8 @@ export function PreviewMessage({ message }: Pick<MessageProps, "message">) {
       <div className="mx-auto w-full max-w-4xl">
         {message.role === "user" ? (
           // User message - full width with grey background and thin black border
-          <div className="w-full rounded-lg border border-black/10 bg-gray-100 p-4 dark:border-white/10 dark:bg-zinc-900">
-            <div className="text-[15px] leading-relaxed">{message.content}</div>
+          <div className="w-full border border-[#262626] bg-[#0A0A0A] p-4">
+            <div className="text-[15px] leading-relaxed text-[#EDEDED]">{message.content}</div>
           </div>
         ) : (
           // Assistant message - no border, just markdown
@@ -184,11 +184,11 @@ export function PreviewMessage({ message }: Pick<MessageProps, "message">) {
                         </div>
                       );
                     }
-                    return (
-                      <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm dark:bg-zinc-800" {...rest}>
-                        {children}
-                      </code>
-                    );
+                      return (
+                        <code className="rounded-sm bg-[#1a1a1a] px-1.5 py-0.5 font-mono text-sm text-[#12d393]" {...rest}>
+                          {children}
+                        </code>
+                      );
                   },
                 }}
               >

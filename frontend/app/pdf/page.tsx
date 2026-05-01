@@ -15,23 +15,18 @@ function PDFViewerContent() {
 
   const documentId = searchParams?.get("document") || null;
 
-  // Update breadcrumbs
   useEffect(() => {
-    const breadcrumbs = [
+    setCustomBreadcrumbs([
       { label: "Home", href: "/" },
       { label: "Documents", href: "/documents" },
       { label: "PDF Viewer" },
-    ];
-
-    setCustomBreadcrumbs(breadcrumbs);
-
-    return () => {
-      setCustomBreadcrumbs(null);
-    };
+    ]);
+    return () => setCustomBreadcrumbs(null);
   }, [setCustomBreadcrumbs]);
 
   return (
-    <div className="h-full">
+    /* -m-4 md:-m-6 cancels the parent layout padding so the PDF viewer fills full width/height */
+    <div className="-m-4 md:-m-6 flex flex-1 flex-col overflow-hidden">
       <PDFViewer apiBaseUrl={apiBaseUrl} authToken={authToken} initialDocumentId={documentId || undefined} />
     </div>
   );
@@ -39,7 +34,15 @@ function PDFViewerContent() {
 
 export default function PDFViewerPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-full items-center justify-center">
+          <p className="font-mono text-xs uppercase tracking-widest text-kh-muted animate-pulse">
+            Initializing PDF engine...
+          </p>
+        </div>
+      }
+    >
       <PDFViewerContent />
     </Suspense>
   );

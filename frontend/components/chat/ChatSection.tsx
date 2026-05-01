@@ -820,7 +820,7 @@ const ChatSection: React.FC<ChatSectionProps> = ({
         {/* Input Area - only shown when there are messages */}
         {messages.length > 0 && (
           <div className="sticky bottom-0 w-full transition-all duration-700 ease-out">
-            <div className="mx-auto max-w-4xl bg-white px-4 pb-2 dark:bg-black">
+            <div className="mx-auto max-w-4xl bg-kh-black px-4 pb-2">
               <form
                 className="pb-6 pt-4"
                 onSubmit={e => {

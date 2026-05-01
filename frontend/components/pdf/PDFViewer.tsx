@@ -34,9 +34,8 @@ import { Badge } from "@/components/ui/badge";
 import { usePDFChatSessions } from "@/hooks/useChatSessions";
 import { useHeader } from "@/contexts/header-context"; // Still needed for setRightContent
 
-// Configure PDF.js worker - use CDN for reliability
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker - served locally from /public to avoid CDN issues
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -134,6 +133,27 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
 
   const [, setIsLoading] = useState(false);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = viewerRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen().catch(err => console.error("Fullscreen error:", err));
+    } else {
+      document.exitFullscreen();
+    }
+  }, []);
+
+  // Sync isFullscreen with browser fullscreen change events
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
 
   // Chat-related state
   const [isChatOpenInternal, setIsChatOpenInternal] = useState(false);
@@ -185,12 +205,11 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   const [isDocumentSelectorOpen, setIsDocumentSelectorOpen] = useState(false);
 
-  // Memoize PDF options to prevent unnecessary reloads
+  // Memoize PDF options - use react-pdf's own bundled assets (no CDN)
   const pdfOptions = useMemo(
     () => ({
-      cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+      cMapUrl: "/pdf-cmaps/",
       cMapPacked: true,
-      standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
     }),
     []
   );
@@ -662,53 +681,43 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     setPdfState(prev => ({ ...prev, scale: 1.0 }));
   }, []);
 
-  // Fetch available PDF documents
+  // Fetch available PDF documents — use /documents/list_docs (correct endpoint)
   const fetchAvailableDocuments = useCallback(async () => {
     if (!apiBaseUrl) return;
 
     setIsLoadingDocuments(true);
     try {
-      console.log("Fetching documents from:", `${apiBaseUrl}/documents`);
-      const response = await fetch(`${apiBaseUrl}/documents`, {
+      const response = await fetch(`${apiBaseUrl}/documents/list_docs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(authToken && { Authorization: `Bearer ${authToken}` }),
         },
-        body: JSON.stringify({}), // Empty body to fetch all documents
+        body: JSON.stringify({ limit: 100, skip: 0 }),
       });
 
       if (response.ok) {
-        const allDocuments = await response.json();
-        console.log("All documents received:", allDocuments.length);
+        // /documents/list_docs returns { documents: [...], total, ... }
+        const data = await response.json();
+        const allDocuments: Array<{
+          external_id: string;
+          filename?: string;
+          content_type: string;
+          folder_name?: string;
+          system_metadata?: { created_at?: string; status?: string };
+        }> = Array.isArray(data) ? data : (data.documents ?? []);
 
-        // Filter for PDF documents only
         const pdfDocuments: PDFDocument[] = allDocuments
-          .filter((doc: { content_type: string }) => doc.content_type === "application/pdf")
-          .map(
-            (doc: {
-              external_id: string;
-              filename?: string;
-              folder_name?: string;
-              system_metadata?: {
-                created_at?: string;
-                status?: string;
-              };
-            }) => ({
-              id: doc.external_id,
-              filename: doc.filename || `Document ${doc.external_id}`,
-              download_url: "", // We'll generate this when needed
-              created_at: doc.system_metadata?.created_at,
-              folder_name: doc.folder_name,
-              status: doc.system_metadata?.status || "unknown",
-            })
-          );
+          .filter(doc => doc.content_type === "application/pdf")
+          .map(doc => ({
+            id: doc.external_id,
+            filename: doc.filename || `Document ${doc.external_id}`,
+            download_url: "",
+            created_at: doc.system_metadata?.created_at,
+            folder_name: doc.folder_name,
+            status: doc.system_metadata?.status || "unknown",
+          }));
 
-        console.log("PDF documents filtered:", pdfDocuments);
-        console.log(
-          "PDF document IDs:",
-          pdfDocuments.map(d => d.id)
-        );
         setAvailableDocuments(pdfDocuments);
       } else {
         console.error("Failed to fetch documents:", response.statusText);
@@ -876,65 +885,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     }
   }, [fetchAvailableDocuments, pdfState.file]);
 
-  // Debug PDF state changes
-  useEffect(() => {
-    console.log("PDF state changed:", pdfState);
-    if (pdfState.pdfDataUrl) {
-      console.log("PDF data URL is available:", pdfState.pdfDataUrl);
-    }
-  }, [pdfState]);
-
-  // Test PDF.js worker accessibility
-  useEffect(() => {
-    const testWorker = async () => {
-      try {
-        console.log("Testing PDF.js worker accessibility...");
-        console.log("Worker URL:", pdfjs.GlobalWorkerOptions.workerSrc);
-
-        // Test if the worker URL is accessible
-        const response = await fetch(pdfjs.GlobalWorkerOptions.workerSrc);
-        if (response.ok) {
-          console.log("PDF.js worker is accessible");
-        } else {
-          console.error("PDF.js worker is not accessible:", response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error("Error testing PDF.js worker:", error);
-      }
-    };
-
-    testWorker();
-  }, []);
-
-  // Debug PDF state changes
-  useEffect(() => {
-    console.log("PDF state changed:", pdfState);
-    if (pdfState.pdfDataUrl) {
-      console.log("PDF data URL is available:", pdfState.pdfDataUrl);
-    }
-  }, [pdfState]);
-
-  // Test PDF.js worker accessibility
-  useEffect(() => {
-    const testWorker = async () => {
-      try {
-        console.log("Testing PDF.js worker accessibility...");
-        console.log("Worker URL:", pdfjs.GlobalWorkerOptions.workerSrc);
-
-        // Test if the worker URL is accessible
-        const response = await fetch(pdfjs.GlobalWorkerOptions.workerSrc);
-        if (response.ok) {
-          console.log("PDF.js worker is accessible");
-        } else {
-          console.error("PDF.js worker is not accessible:", response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error("Error testing PDF.js worker:", error);
-      }
-    };
-
-    testWorker();
-  }, []);
+  // (debug effects removed — worker is served locally, no CDN test needed)
 
   if (!pdfState.file) {
     return (
@@ -1227,7 +1178,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
   }
 
   return (
-    <div className="flex h-full bg-white dark:bg-black">
+    <div ref={viewerRef} className="flex h-full bg-white dark:bg-black">
       {/* Main PDF Area */}
       <div
         className="flex flex-1 flex-col transition-all duration-300"
@@ -1277,6 +1228,9 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     options={pdfOptions}
+                    // keepPreviousData on Document keeps the old page canvas mounted
+                    // while the next page renders — this eliminates the blink/flash
+                    keepPreviousData={true}
                     loading={
                       <div className="flex h-[800px] w-[600px] items-center justify-center bg-white p-8 text-slate-500 dark:bg-zinc-900 dark:text-slate-400">
                         <div className="text-center">
@@ -1297,11 +1251,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                   >
                     <Page
                       pageNumber={pdfState.currentPage}
-                      loading={
-                        <div className="flex h-[800px] w-[600px] items-center justify-center bg-slate-100 dark:bg-zinc-800">
-                          <div className="text-slate-500 dark:text-slate-400">Loading page...</div>
-                        </div>
-                      }
+                      loading={null}
                       error={
                         <div className="flex h-[800px] w-[600px] items-center justify-center bg-slate-100 dark:bg-zinc-800">
                           <div className="text-red-500 dark:text-red-400">Error loading page</div>
@@ -1331,11 +1281,11 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                     type="number"
                     value={pdfState.currentPage}
                     onChange={e => goToPage(parseInt(e.target.value) || 1)}
-                    className="w-16 text-center"
+                    className="w-16 text-center !bg-white !text-black !border-slate-300 dark:!bg-zinc-800 dark:!text-white dark:!border-slate-600"
                     min={1}
                     max={pdfState.totalPages}
                   />
-                  <span className="text-sm text-slate-500">of {pdfState.totalPages}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">of {pdfState.totalPages}</span>
                 </div>
 
                 <Button
@@ -1369,7 +1319,12 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                   <RotateCw className="h-4 w-4" />
                 </Button>
 
-                <Button variant="outline" size="sm">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                >
                   <Maximize2 className="h-4 w-4" />
                 </Button>
               </div>
