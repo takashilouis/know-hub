@@ -18,7 +18,6 @@ from .utils import build_store_metrics
 
 logger = logging.getLogger(__name__)
 Base = declarative_base()
-PGVECTOR_MAX_DIMENSIONS = 2000  # Maximum dimensions for pgvector
 
 
 class Vector(UserDefinedType):
@@ -215,7 +214,7 @@ class PGVectorStore(BaseVectorStore):
             from core.config import get_settings
 
             settings = get_settings()
-            dimensions = min(settings.VECTOR_DIMENSIONS, PGVECTOR_MAX_DIMENSIONS)
+            dimensions = settings.VECTOR_DIMENSIONS
 
             logger.info(f"Initializing PGVector store with {dimensions} dimensions")
 
@@ -263,7 +262,7 @@ class PGVectorStore(BaseVectorStore):
                 if table_exists:
                     # Check current vector dimensions
                     check_dim_sql = """
-                    SELECT atttypmod - 4 AS dimensions
+                    SELECT atttypmod AS dimensions
                     FROM pg_attribute a
                     JOIN pg_class c ON a.attrelid = c.oid
                     JOIN pg_type t ON a.atttypid = t.oid
@@ -274,28 +273,31 @@ class PGVectorStore(BaseVectorStore):
                     result = await conn.execute(text(check_dim_sql))
                     current_dim = result.scalar()
 
-                    if (current_dim + 4) != dimensions:
+                    if current_dim != dimensions:
                         logger.warning(
                             f"Vector dimensions changed from {current_dim} to {dimensions}."
-                            "This requires recreating tables and will delete all existing vector data."
+                            "This requires recreating vector_embeddings and will delete existing vector data."
                         )
 
-                        # Ask for explicit user confirmation
-                        user_input = input(
-                            f"WARNING: Embedding dimensions changed from {current_dim} to {dimensions}."
-                            "This will DELETE ALL existing vector data. Type 'yes' to continue: "
+                        allow_recreate = bool(
+                            getattr(settings, "bypass_auth_mode", False)
+                            or getattr(settings, "ENVIRONMENT", "").lower() == "development"
                         )
-
-                        if user_input.lower() != "yes":
-                            logger.info("User aborted table recreation due to dimension change")
+                        if not allow_recreate:
                             raise ValueError(
-                                "Operation aborted by user. Vector dimension change requires recreating tables."
+                                "vector_embeddings.embedding is vector(%s), but the configured embedding model "
+                                "produces vector(%s). Recreate vector_embeddings or update [embedding].dimensions."
+                                % (current_dim, dimensions)
                             )
 
-                        logger.info("User confirmed table recreation")
+                        logger.info(
+                            "Development mode detected; recreating vector_embeddings with vector(%s)", dimensions
+                        )
 
                         # Drop existing vector index if it exists
                         await conn.execute(text("DROP INDEX IF EXISTS vector_idx;"))
+                        await conn.execute(text("DROP INDEX IF EXISTS idx_vector_embedding;"))
+                        await conn.execute(text("DROP INDEX IF EXISTS idx_document_id;"))
 
                         # Drop existing vector embeddings table
                         await conn.execute(text("DROP TABLE IF EXISTS vector_embeddings;"))

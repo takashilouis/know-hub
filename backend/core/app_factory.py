@@ -37,6 +37,7 @@ async def lifespan(app_instance: FastAPI):
             logger.info("Lifespan: Database initialization successful")
         else:
             logger.error("Lifespan: Database initialization failed")
+            raise RuntimeError("Database initialization failed")
     except Exception as exc:  # noqa: BLE001
         logger.error(
             "Lifespan: CRITICAL - Failed to initialize Database: %s",
@@ -48,7 +49,9 @@ async def lifespan(app_instance: FastAPI):
     logger.info("Lifespan: Initializing Vector Store…")
     try:
         if hasattr(vector_store, "initialize"):
-            await vector_store.initialize()
+            success = await vector_store.initialize()
+            if not success:
+                raise RuntimeError("Vector Store initialization failed")
         logger.info("Lifespan: Vector Store initialization successful (or not applicable).")
     except Exception as exc:  # noqa: BLE001
         logger.error(
@@ -60,7 +63,9 @@ async def lifespan(app_instance: FastAPI):
     logger.info("Lifespan: Initializing V2 Chunk Store…")
     try:
         if hasattr(v2_chunk_store, "initialize"):
-            await v2_chunk_store.initialize()
+            success = await v2_chunk_store.initialize()
+            if not success:
+                raise RuntimeError("V2 Chunk Store initialization failed")
         logger.info("Lifespan: V2 Chunk Store initialization successful (or not applicable).")
     except Exception as exc:  # noqa: BLE001
         logger.error(

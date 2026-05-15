@@ -238,17 +238,14 @@ class MorphikParser(BaseParser):
         """Get or create the cached Docling converter."""
         if cls._docling_converter is None:
             pipeline_options = PdfPipelineOptions()
-            pipeline_options.do_ocr = True
-            try:
-                import easyocr  # noqa: F401
-                from docling.datamodel.pipeline_options import EasyOcrOptions
-                pipeline_options.ocr_options = EasyOcrOptions(lang=["en"])
-            except ImportError:
-                pass  # Use Docling's default OCR if EasyOCR is unavailable
+            # Only enable OCR for scanned PDFs; native text PDFs have embedded text
+            # and running OCR wastes CPU/RAM and produces empty results.
+            pipeline_options.do_ocr = False
             pipeline_options.do_table_structure = True
-            pipeline_options.table_structure_options = TableStructureOptions(mode="accurate")
-            pipeline_options.images_scale = 2.0
-            pipeline_options.generate_picture_images = True
+            pipeline_options.table_structure_options = TableStructureOptions(mode="fast")
+            # 1.0 is sufficient for text extraction; 2.0 quadruples memory per page
+            pipeline_options.images_scale = 1.0
+            pipeline_options.generate_picture_images = False
 
             cls._docling_converter = DocumentConverter(
                 format_options={

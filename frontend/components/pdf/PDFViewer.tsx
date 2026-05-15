@@ -132,6 +132,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
   });
 
   const [, setIsLoading] = useState(false);
+  const [loadedPdfDataUrl, setLoadedPdfDataUrl] = useState<string | null>(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -610,18 +611,16 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
   const onDocumentLoadSuccess = useCallback(
     ({ numPages }: { numPages: number }) => {
       console.log("PDF document loaded successfully with", numPages, "pages");
-      console.log("Current PDF state:", pdfState);
-      console.log("PDF document loaded successfully with", numPages, "pages");
-      console.log("Current PDF state:", pdfState);
       setPdfState(prev => ({
         ...prev,
         totalPages: numPages,
         currentPage: 1,
       }));
+      setLoadedPdfDataUrl(pdfState.pdfDataUrl);
       setIsLoading(false);
       console.log("PDF loading state set to false");
     },
-    [pdfState]
+    [pdfState.pdfDataUrl]
   );
 
   // Handle PDF load error
@@ -632,6 +631,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
       console.error("PDF file URL:", pdfState.pdfDataUrl);
       console.error("PDF file object:", pdfState.file);
       console.error("PDF state:", pdfState);
+      setLoadedPdfDataUrl(null);
 
       // Additional debugging for common PDF.js issues
       if (error.message.includes("Invalid PDF")) {
@@ -734,6 +734,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     async (document: PDFDocument) => {
       console.log("Document selected:", document);
       setIsLoading(true);
+      setLoadedPdfDataUrl(null);
       setIsDocumentSelectorOpen(false);
 
       // Reset chat state for new PDF
@@ -801,16 +802,6 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
         if (!blob.type.includes("pdf") && !blob.type.includes("application/octet-stream")) {
           console.warn("Blob type is not PDF:", blob.type, "- proceeding anyway");
         }
-        console.log("Blob type:", blob.type);
-
-        // Validate that we have a valid PDF blob
-        if (blob.size === 0) {
-          throw new Error("Downloaded file is empty");
-        }
-
-        if (!blob.type.includes("pdf") && !blob.type.includes("application/octet-stream")) {
-          console.warn("Blob type is not PDF:", blob.type, "- proceeding anyway");
-        }
 
         const file = new File([blob], document.filename, { type: "application/pdf" });
 
@@ -837,24 +828,23 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
           documentId: document.id,
         }));
 
-        // Set loading to false after successfully setting up the PDF state
-        // Note: onDocumentLoadSuccess will also call setIsLoading(false) when PDF.js finishes loading
-        setIsLoading(false);
-        clearTimeout(loadingTimeout);
-
-        // Set loading to false after successfully setting up the PDF state
-        // Note: onDocumentLoadSuccess will also call setIsLoading(false) when PDF.js finishes loading
-        setIsLoading(false);
         clearTimeout(loadingTimeout);
       } catch (error) {
         console.error("Error loading selected document:", error);
         setIsLoading(false);
         clearTimeout(loadingTimeout);
-        clearTimeout(loadingTimeout);
       }
     },
     [apiBaseUrl, authToken]
   );
+
+  useEffect(() => {
+    return () => {
+      if (pdfState.pdfDataUrl) {
+        URL.revokeObjectURL(pdfState.pdfDataUrl);
+      }
+    };
+  }, [pdfState.pdfDataUrl]);
 
   // Removed openDocumentSelector function since Browse Documents button was removed
 
@@ -1224,13 +1214,11 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
               {pdfState.pdfDataUrl && (
                 <div className="border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-zinc-900">
                   <Document
+                    key={pdfState.pdfDataUrl}
                     file={pdfState.pdfDataUrl}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     options={pdfOptions}
-                    // keepPreviousData on Document keeps the old page canvas mounted
-                    // while the next page renders — this eliminates the blink/flash
-                    keepPreviousData={true}
                     loading={
                       <div className="flex h-[800px] w-[600px] items-center justify-center bg-white p-8 text-slate-500 dark:bg-zinc-900 dark:text-slate-400">
                         <div className="text-center">
@@ -1249,18 +1237,21 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                       </div>
                     }
                   >
-                    <Page
-                      pageNumber={pdfState.currentPage}
-                      loading={null}
-                      error={
-                        <div className="flex h-[800px] w-[600px] items-center justify-center bg-slate-100 dark:bg-zinc-800">
-                          <div className="text-red-500 dark:text-red-400">Error loading page</div>
-                        </div>
-                      }
-                      width={600 * pdfState.scale}
-                      renderTextLayer={true}
-                      renderAnnotationLayer={true}
-                    />
+                    {loadedPdfDataUrl === pdfState.pdfDataUrl && pdfState.totalPages > 0 && (
+                      <Page
+                        key={`${pdfState.pdfDataUrl}-${pdfState.currentPage}`}
+                        pageNumber={pdfState.currentPage}
+                        loading={null}
+                        error={
+                          <div className="flex h-[800px] w-[600px] items-center justify-center bg-slate-100 dark:bg-zinc-800">
+                            <div className="text-red-500 dark:text-red-400">Error loading page</div>
+                          </div>
+                        }
+                        width={600 * pdfState.scale}
+                        renderTextLayer={true}
+                        renderAnnotationLayer={true}
+                      />
+                    )}
                   </Document>
                 </div>
               )}
@@ -1281,7 +1272,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                     type="number"
                     value={pdfState.currentPage}
                     onChange={e => goToPage(parseInt(e.target.value) || 1)}
-                    className="w-16 text-center !bg-white !text-black !border-slate-300 dark:!bg-zinc-800 dark:!text-white dark:!border-slate-600"
+                    className="w-16 !border-slate-300 !bg-white text-center !text-black dark:!border-slate-600 dark:!bg-zinc-800 dark:!text-white"
                     min={1}
                     max={pdfState.totalPages}
                   />
