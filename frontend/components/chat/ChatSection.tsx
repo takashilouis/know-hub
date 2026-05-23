@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
+
+const PDFViewer = dynamic(() => import("@/components/pdf/PDFViewer").then(m => m.PDFViewer), { ssr: false });
+
 import { useMorphikChat } from "@/hooks/useMorphikChat";
 import { generateUUID } from "@/lib/utils";
 import type { QueryOptions } from "@/components/types";
@@ -134,14 +138,40 @@ const ChatSection: React.FC<ChatSectionProps> = ({
     Pick<QueryOptions, "k" | "min_score" | "temperature" | "max_tokens" | "padding" | "inline_citations">
   > &
     QueryOptions = {
+    ...queryOptions,
     k: queryOptions.k ?? 5,
     min_score: queryOptions.min_score ?? 0.7,
     temperature: queryOptions.temperature ?? 0.3,
-    max_tokens: queryOptions.max_tokens ?? 1024,
+    max_tokens: queryOptions.max_tokens ?? 3000,
     padding: queryOptions.padding ?? 0,
     inline_citations: queryOptions.inline_citations ?? inlineCitationsEnabled,
-    ...queryOptions,
   };
+
+  // PDF panel state
+  const [pdfDocumentId, setPdfDocumentId] = useState<string | null>(null);
+  const [pdfPanelWidth, setPdfPanelWidth] = useState(600);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartWidth = useRef(0);
+
+  const handleCitationClick = useCallback((documentId: string) => {
+    setPdfDocumentId(documentId);
+  }, []);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current) return;
+      const delta = dragStartX.current - e.clientX;
+      setPdfPanelWidth(Math.max(320, Math.min(800, dragStartWidth.current + delta)));
+    };
+    const onMouseUp = () => { isDragging.current = false; };
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
 
   // State for settings visibility
   const [showSettings, setShowSettings] = useState(false);
@@ -477,9 +507,9 @@ const ChatSection: React.FC<ChatSectionProps> = ({
   };
 
   return (
-    <div className="relative -m-4 flex h-[calc(100vh-3rem)] w-[calc(100%+2rem)] bg-background md:-m-6 md:h-[calc(100vh-3rem)] md:w-[calc(100%+3rem)]">
-      {/* Main chat area - now takes full width */}
-      <div className="flex h-full w-full flex-col overflow-hidden">
+    <div className="relative -m-4 flex h-[calc(100vh-3rem)] w-[calc(100%+2rem)] overflow-hidden bg-background md:-m-6 md:h-[calc(100vh-3rem)] md:w-[calc(100%+3rem)]">
+      {/* Main chat area */}
+      <div className={`flex h-full flex-col overflow-hidden transition-all duration-300 ${pdfDocumentId ? "min-w-0 flex-1" : "w-full"}`}>
         {/* Top bar with model selector */}
         <div className="absolute left-0 top-0 z-10 flex items-center px-6 py-3">
           {/* Model selector as pill */}
@@ -803,9 +833,9 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           /* Messages present - normal layout */
           <div className="relative min-h-0 flex-1 transition-all duration-700 ease-out">
             <ScrollArea className="h-full" ref={messagesContainerRef}>
-              <div className="mx-auto flex max-w-4xl flex-col pb-64 pt-8">
+              <div className="mx-auto flex max-w-4xl flex-col pb-64 pt-8 px-4">
                 {messages.map(msg => (
-                  <PreviewMessage key={msg.id} message={msg} />
+                  <PreviewMessage key={msg.id} message={msg} onCitationClick={handleCitationClick} />
                 ))}
 
                 {status === "loading" && messages.length > 0 && messages[messages.length - 1].role === "user" && (
@@ -1041,6 +1071,40 @@ const ChatSection: React.FC<ChatSectionProps> = ({
           </div>
         )}
       </div>
+
+      {/* PDF panel — slides in from the right when a citation is clicked */}
+      {pdfDocumentId && (
+        <>
+          {/* Drag handle */}
+          <div
+            className="w-1 cursor-col-resize bg-border/50 hover:bg-kh-accent/60 active:bg-kh-accent"
+            onMouseDown={e => {
+              isDragging.current = true;
+              dragStartX.current = e.clientX;
+              dragStartWidth.current = pdfPanelWidth;
+              e.preventDefault();
+            }}
+          />
+          {/* PDF viewer panel */}
+          <div className="relative flex h-full flex-col border-l border-border/50 bg-background" style={{ width: pdfPanelWidth }}>
+            {/* Close button */}
+            <button
+              onClick={() => setPdfDocumentId(null)}
+              className="absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground"
+              title="Close PDF viewer"
+            >
+              ✕
+            </button>
+            <PDFViewer
+              key={pdfDocumentId}
+              apiBaseUrl={apiBaseUrl}
+              authToken={authToken}
+              initialDocumentId={pdfDocumentId}
+              chatOpen={false}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -50,13 +50,14 @@ interface PDFViewerProps {
 
 interface PDFState {
   file: File | null;
+  pdfData: Uint8Array | null;
   currentPage: number;
   totalPages: number;
   scale: number;
   rotation: number;
   pdfDataUrl: string | null;
-  documentName?: string; // Add document name for selected documents
-  documentId?: string; // Add document ID for selected documents
+  documentName?: string;
+  documentId?: string;
 }
 
 interface ChatMessage {
@@ -124,6 +125,7 @@ interface PDFDocument {
 export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatToggle, chatOpen }: PDFViewerProps) {
   const [pdfState, setPdfState] = useState<PDFState>({
     file: null,
+    pdfData: null,
     currentPage: 1,
     totalPages: 0,
     scale: 1.0,
@@ -131,7 +133,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     pdfDataUrl: null,
   });
 
-  const [, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!initialDocumentId);
   const [loadedPdfDataUrl, setLoadedPdfDataUrl] = useState<string | null>(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -803,25 +805,18 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
           console.warn("Blob type is not PDF:", blob.type, "- proceeding anyway");
         }
 
-        const file = new File([blob], document.filename, { type: "application/pdf" });
-
-        // Create object URL for the PDF
-        let pdfDataUrl: string;
-        try {
-          pdfDataUrl = URL.createObjectURL(blob);
-          console.log("Created PDF data URL:", pdfDataUrl);
-          console.log("PDF data URL length:", pdfDataUrl.length);
-        } catch (urlError) {
-          console.error("Failed to create object URL:", urlError);
-          throw new Error("Failed to create PDF data URL");
-        }
+        const arrayBuffer = await blob.arrayBuffer();
+        const pdfData = new Uint8Array(arrayBuffer);
+        // Use a stable string key (not a blob URL) so PDF.js never makes a network request.
+        const pdfDataUrl = `doc:${document.id}`;
 
         setPdfState(prev => ({
           ...prev,
-          file,
+          file: null,
+          pdfData,
           pdfDataUrl,
           currentPage: 1,
-          totalPages: 0, // Will be set in onDocumentLoadSuccess
+          totalPages: 0,
           scale: 1.0,
           rotation: 0,
           documentName: document.filename,
@@ -838,46 +833,58 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     [apiBaseUrl, authToken]
   );
 
-  useEffect(() => {
-    return () => {
-      if (pdfState.pdfDataUrl) {
-        URL.revokeObjectURL(pdfState.pdfDataUrl);
-      }
-    };
-  }, [pdfState.pdfDataUrl]);
+  // pdfData is a Uint8Array — no URL to revoke.
 
   // Removed openDocumentSelector function since Browse Documents button was removed
 
-  // Load initial document if provided
+  // When initialDocumentId is provided (citation click from chat), load it directly
+  // without going through fetchAvailableDocuments — avoids content_type filter issues and
+  // is faster. Parent uses key={pdfDocumentId} to remount for each new document.
+  const initialLoadDone = useRef(false);
   useEffect(() => {
-    if (initialDocumentId && !pdfState.file) {
-      // Find and load the document with the given ID
-      fetchAvailableDocuments().then(() => {
-        // This will be handled in the next useEffect when availableDocuments is updated
+    if (initialDocumentId && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      handleDocumentSelect({
+        id: initialDocumentId,
+        filename: initialDocumentId,
+        download_url: "",
+        status: "completed",
       });
     }
-  }, [initialDocumentId, pdfState.file, fetchAvailableDocuments]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
-  // Handle loading initial document when availableDocuments is populated
-  useEffect(() => {
-    if (initialDocumentId && availableDocuments.length > 0 && !pdfState.file) {
-      const documentToLoad = availableDocuments.find(doc => doc.id === initialDocumentId);
-      if (documentToLoad) {
-        handleDocumentSelect(documentToLoad);
-      }
-    }
-  }, [initialDocumentId, availableDocuments, pdfState.file, handleDocumentSelect]);
+  // Memoize the file object so PDF.js worker isn't restarted on every render.
+  // Passing a new object literal each render (e.g. { data: pdfState.pdfData }) causes
+  // the "sendWithPromise null" crash because PDF.js thinks the file changed.
+  const pdfFile = useMemo(
+    () => (pdfState.pdfData ? { data: pdfState.pdfData } : null),
+    [pdfState.pdfData]
+  );
 
-  // Load documents when component mounts (for the document list)
+  // Load documents when component mounts in standalone mode (no initialDocumentId)
   useEffect(() => {
-    if (!pdfState.file) {
+    if (!pdfState.file && !initialDocumentId) {
       fetchAvailableDocuments();
     }
-  }, [fetchAvailableDocuments, pdfState.file]);
+  }, [fetchAvailableDocuments, initialDocumentId]);
 
   // (debug effects removed — worker is served locally, no CDN test needed)
 
-  if (!pdfState.file) {
+  // Show a loading screen while we're fetching the document by initialDocumentId
+  if (initialDocumentId && isLoading && !pdfState.pdfData) {
+    return (
+      <div className="flex h-full items-center justify-center bg-white dark:bg-black">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          <span>Loading document...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show document list when no document is loaded (standalone viewer mode)
+  if (!pdfState.file && !pdfState.pdfData) {
     return (
       <div className="flex h-screen flex-col bg-white dark:bg-background">
         {/* Document List Area */}
@@ -1211,11 +1218,11 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                 transformOrigin: "center center",
               }}
             >
-              {pdfState.pdfDataUrl && (
+              {pdfFile && (
                 <div className="border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-zinc-900">
                   <Document
-                    key={pdfState.pdfDataUrl}
-                    file={pdfState.pdfDataUrl}
+                    key={pdfState.documentId}
+                    file={pdfFile}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     options={pdfOptions}
@@ -1239,7 +1246,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
                   >
                     {loadedPdfDataUrl === pdfState.pdfDataUrl && pdfState.totalPages > 0 && (
                       <Page
-                        key={`${pdfState.pdfDataUrl}-${pdfState.currentPage}`}
+                        key={`${pdfState.documentId}-${pdfState.currentPage}`}
                         pageNumber={pdfState.currentPage}
                         loading={null}
                         error={
