@@ -144,7 +144,7 @@ export function useMorphikChat({
     use_reranking: initialQueryOptions.use_reranking ?? false,
     use_colpali: initialQueryOptions.use_colpali ?? true,
     padding: initialQueryOptions.padding ?? 0,
-    max_tokens: initialQueryOptions.max_tokens ?? 1024,
+    max_tokens: initialQueryOptions.max_tokens ?? 3000,
     temperature: initialQueryOptions.temperature ?? 0.3,
     folder_name: initialQueryOptions.folder_name,
     folder_depth: initialQueryOptions.folder_depth,

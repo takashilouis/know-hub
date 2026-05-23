@@ -20,7 +20,6 @@ from core.vector_store.utils import build_store_metrics
 
 logger = logging.getLogger(__name__)
 Base = declarative_base()
-PGVECTOR_MAX_DIMENSIONS = 2000
 
 
 class ChunkV2Model(Base):
@@ -142,7 +141,7 @@ class ChunkV2Store:
         from core.config import get_settings
 
         settings = get_settings()
-        dimensions = min(settings.VECTOR_DIMENSIONS, PGVECTOR_MAX_DIMENSIONS)
+        dimensions = settings.VECTOR_DIMENSIONS
 
         try:
             attempt = 0
@@ -192,7 +191,7 @@ class ChunkV2Store:
                             await conn.execute(text("ALTER TABLE chunk_v2 ADD COLUMN doc_metadata JSONB;"))
 
                     check_dim_sql = """
-                    SELECT atttypmod - 4 AS dimensions
+                    SELECT atttypmod AS dimensions
                     FROM pg_attribute a
                     JOIN pg_class c ON a.attrelid = c.oid
                     JOIN pg_type t ON a.atttypid = t.oid
@@ -203,21 +202,24 @@ class ChunkV2Store:
                     result = await conn.execute(text(check_dim_sql))
                     current_dim = result.scalar()
 
-                    if current_dim is not None and (current_dim + 4) != dimensions:
+                    if current_dim is not None and current_dim != dimensions:
                         logger.warning(
                             "chunk_v2 vector dimensions changed from %s to %s. Table recreation required.",
                             current_dim,
                             dimensions,
                         )
-                        user_input = input(
-                            f"WARNING: chunk_v2 embedding dimensions changed from {current_dim} to {dimensions}. "
-                            "This will DELETE ALL existing v2 chunk data. Type 'yes' to continue: "
+                        allow_recreate = bool(
+                            getattr(settings, "bypass_auth_mode", False)
+                            or getattr(settings, "ENVIRONMENT", "").lower() == "development"
                         )
-                        if user_input.lower() != "yes":
+                        if not allow_recreate:
                             raise ValueError(
-                                "Operation aborted by user. chunk_v2 dimension change requires recreation."
+                                "chunk_v2.embedding is vector(%s), but the configured embedding model produces "
+                                "vector(%s). Recreate chunk_v2 or update [embedding].dimensions."
+                                % (current_dim, dimensions)
                             )
 
+                        logger.info("Development mode detected; recreating chunk_v2 with vector(%s)", dimensions)
                         await conn.execute(text("DROP INDEX IF EXISTS chunk_v2_embedding_idx;"))
                         await conn.execute(text("DROP INDEX IF EXISTS chunk_v2_document_id_idx;"))
                         await conn.execute(text("DROP TABLE IF EXISTS chunk_v2;"))

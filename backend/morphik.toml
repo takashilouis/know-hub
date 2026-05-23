@@ -46,7 +46,7 @@ claude_sonnet = { model_name = "claude-3-7-sonnet-latest" }
 
 [completion]
 model = "gemini_flash"          # Primary LLM: Gemini 2.5 Flash
-default_max_tokens = "2000"
+default_max_tokens = "3000"
 default_temperature = 0.3
 
 [database]

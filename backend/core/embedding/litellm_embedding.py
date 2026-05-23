@@ -8,7 +8,6 @@ from core.embedding.base_embedding_model import BaseEmbeddingModel
 from core.models.chunk import Chunk
 
 logger = logging.getLogger(__name__)
-PGVECTOR_MAX_DIMENSIONS = 2000  # Maximum dimensions for pgvector
 
 
 class LiteLLMEmbeddingModel(BaseEmbeddingModel):
@@ -32,7 +31,7 @@ class LiteLLMEmbeddingModel(BaseEmbeddingModel):
             raise ValueError(f"Model '{model_key}' not found in registered_models configuration")
 
         self.model_config = settings.REGISTERED_MODELS[model_key]
-        self.dimensions = min(settings.VECTOR_DIMENSIONS, 2000)
+        self.dimensions = settings.VECTOR_DIMENSIONS
         model_name_lower = str(self.model_config.get("model_name", "")).lower()
         api_base_lower = str(self.model_config.get("api_base", "")).lower()
         self._is_local_provider = (
@@ -61,9 +60,11 @@ class LiteLLMEmbeddingModel(BaseEmbeddingModel):
             model_params = {"model": self.model_config["model_name"]}
             if self.model_config["model_name"] in [
                 "text-embedding-3-large",
+                "text-embedding-3-small",
                 "azure/text-embedding-3-large",
+                "azure/text-embedding-3-small",
             ]:
-                model_params["dimensions"] = PGVECTOR_MAX_DIMENSIONS
+                model_params["dimensions"] = self.dimensions
 
             # Add all model-specific parameters from the config
             for key, value in self.model_config.items():

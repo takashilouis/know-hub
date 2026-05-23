@@ -1500,6 +1500,7 @@ async def startup(ctx):
         logger.info("Database initialization successful")
     else:
         logger.error("Database initialization failed")
+        raise RuntimeError("Database initialization failed")
     ctx["database"] = database
 
     # Initialize vector store
@@ -1511,6 +1512,7 @@ async def startup(ctx):
         logger.info("Primary vector store initialization successful")
     else:
         logger.error("Primary vector store initialization failed")
+        raise RuntimeError("Primary vector store initialization failed")
     ctx["vector_store"] = vector_store
 
     # Initialize v2 chunk store
@@ -1521,6 +1523,7 @@ async def startup(ctx):
         logger.info("V2 chunk store initialization successful")
     else:
         logger.error("V2 chunk store initialization failed")
+        raise RuntimeError("V2 chunk store initialization failed")
     ctx["chunk_v2_store"] = chunk_v2_store
 
     # Initialize storage

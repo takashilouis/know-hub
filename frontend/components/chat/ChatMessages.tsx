@@ -97,8 +97,61 @@ function CopyButton({ content }: { content: string }) {
   );
 }
 
-export function PreviewMessage({ message }: Pick<MessageProps, "message">) {
+export function PreviewMessage({
+  message,
+  onCitationClick,
+}: Pick<MessageProps, "message"> & {
+  onCitationClick?: (documentId: string, filename: string) => void;
+}) {
   const sources = message.experimental_customData?.sources;
+
+  // filename → document_id lookup built from the Sources list attached to this message
+  const filenameToDocId = React.useMemo(() => {
+    const map = new Map<string, string>();
+    sources?.forEach(s => {
+      if (s.filename && s.document_id) map.set(s.filename, s.document_id);
+    });
+    return map;
+  }, [sources]);
+
+  // Stores placeholder-key → { docId, display, filename } so the `a` renderer can
+  // recover the original text after we replaced it with a markdown-safe key.
+  // Filenames with underscores/quotes break GFM link text rendering, so we use a
+  // clean numeric key like [ck0](citation://id) and look up the real text here.
+  const citationMapRef = React.useRef<Map<string, { docId: string; display: string; filename: string }>>(new Map());
+
+  const processedContent = React.useMemo(() => {
+    citationMapRef.current = new Map();
+    if (!onCitationClick || filenameToDocId.size === 0) return message.content;
+    let n = 0;
+
+    // Pass 1: replace [filename, page N] and [filename](url) bracket patterns.
+    // Strip trailing ", page …" (handles "page 1", "page 1, 2", etc.) so filenames
+    // with internal commas (e.g. "Peopleware, Third Edition.pdf") still match.
+    let result = message.content.replace(/\[([^\]\n]+)\](?:\([^)\n]*\))?/g, (match, name) => {
+      const withoutPage = name.replace(/,\s*page\s+.+$/i, "").trim();
+      const docId = filenameToDocId.get(name) ?? filenameToDocId.get(withoutPage);
+      if (!docId) return match;
+      const key = `ck${n++}`;
+      citationMapRef.current.set(key, { docId, display: name, filename: withoutPage });
+      return `[${key}](citation://${docId})`;
+    });
+
+    // Pass 2: catch bare filename occurrences that the LLM wrote as plain/bold text
+    // without brackets (e.g. "**Lab01_questions.pdf**"). Sort longest-first so a longer
+    // filename is matched before a shorter one that is a substring of it.
+    const sortedEntries = Array.from(filenameToDocId.entries()).sort((a, b) => b[0].length - a[0].length);
+    for (const [filename, docId] of sortedEntries) {
+      const escaped = filename.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result.replace(new RegExp(escaped, "g"), match => {
+        const key = `ck${n++}`;
+        citationMapRef.current.set(key, { docId, display: match, filename: match });
+        return `[${key}](citation://${docId})`;
+      });
+    }
+
+    return result;
+  }, [message.content, filenameToDocId, onCitationClick]);
 
   return (
     <div className="group relative py-4">
@@ -126,16 +179,46 @@ export function PreviewMessage({ message }: Pick<MessageProps, "message">) {
                   ol: ({ children }) => <ol className="mb-4 list-decimal space-y-1 pl-6">{children}</ol>,
                   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-                  a: ({ href, children }) => (
-                    <a
-                      href={href}
-                      className="text-primary underline-offset-2 hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {children}
-                    </a>
-                  ),
+                  a: ({ href, children }) => {
+                    const linkText = Array.isArray(children)
+                      ? children.filter(c => typeof c === "string").join("")
+                      : String(children ?? "");
+
+                    // Detect our own citation placeholders by link text (ck0, ck1, …).
+                    // We cannot rely on href because react-markdown sanitizes the custom
+                    // "citation://" scheme and sets href to null, causing citations to vanish.
+                    if (/^ck\d+$/i.test(linkText) && onCitationClick) {
+                      const info = citationMapRef.current.get(linkText);
+                      if (info) {
+                        return (
+                          <button
+                            onClick={() => onCitationClick(info.docId, info.filename)}
+                            className="cursor-pointer font-bold text-current hover:underline hover:decoration-kh-accent hover:underline-offset-2"
+                            title={`Open ${info.filename}`}
+                          >
+                            [{info.display}]
+                          </button>
+                        );
+                      }
+                      return <></>;
+                    }
+
+                    // Suppress LLM-hallucinated numbered citations like [cite0](url).
+                    if (/^cite\d+$/i.test(linkText)) {
+                      return <></>;
+                    }
+
+                    return (
+                      <a
+                        href={href}
+                        className="text-primary underline-offset-2 hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
                   blockquote: ({ children }) => (
                     <blockquote className="my-4 border-l-4 border-gray-300 pl-4 italic text-muted-foreground dark:border-gray-600">
                       {children}
@@ -184,15 +267,15 @@ export function PreviewMessage({ message }: Pick<MessageProps, "message">) {
                         </div>
                       );
                     }
-                      return (
-                        <code className="rounded-sm bg-[#1a1a1a] px-1.5 py-0.5 font-mono text-sm text-[#12d393]" {...rest}>
-                          {children}
-                        </code>
-                      );
+                    return (
+                      <code className="rounded-sm bg-[#1a1a1a] px-1.5 py-0.5 font-mono text-sm text-[#12d393]" {...rest}>
+                        {children}
+                      </code>
+                    );
                   },
                 }}
               >
-                {message.content}
+                {processedContent}
               </ReactMarkdown>
             </div>
 
