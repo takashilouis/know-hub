@@ -835,7 +835,12 @@ const ChatSection: React.FC<ChatSectionProps> = ({
             <ScrollArea className="h-full" ref={messagesContainerRef}>
               <div className="mx-auto flex max-w-4xl flex-col pb-64 pt-8 px-4">
                 {messages.map(msg => (
-                  <PreviewMessage key={msg.id} message={msg} onCitationClick={handleCitationClick} />
+                  <PreviewMessage
+                    key={msg.id}
+                    message={msg}
+                    onCitationClick={handleCitationClick}
+                    citationDocuments={documents.map(d => ({ filename: d.filename, document_id: d.id }))}
+                  />
                 ))}
 
                 {status === "loading" && messages.length > 0 && messages[messages.length - 1].role === "user" && (
