@@ -100,19 +100,31 @@ function CopyButton({ content }: { content: string }) {
 export function PreviewMessage({
   message,
   onCitationClick,
+  citationDocuments,
 }: Pick<MessageProps, "message"> & {
   onCitationClick?: (documentId: string, filename: string) => void;
+  /** All available documents — used as fallback for citation lookup in historical messages
+   *  loaded from server history (which have no per-message sources stored server-side). */
+  citationDocuments?: Array<{ filename: string; document_id: string }>;
 }) {
   const sources = message.experimental_customData?.sources;
 
-  // filename → document_id lookup built from the Sources list attached to this message
+  // filename → document_id lookup.
+  // Primary: actual sources attached to this message (live query results).
+  // Fallback: the full documents list passed from ChatSection (for history restores).
   const filenameToDocId = React.useMemo(() => {
     const map = new Map<string, string>();
-    sources?.forEach(s => {
-      if (s.filename && s.document_id) map.set(s.filename, s.document_id);
-    });
+    if (sources && sources.length > 0) {
+      sources.forEach(s => {
+        if (s.filename && s.document_id) map.set(s.filename, s.document_id);
+      });
+    } else if (citationDocuments && citationDocuments.length > 0) {
+      citationDocuments.forEach(d => {
+        if (d.filename && d.document_id) map.set(d.filename, d.document_id);
+      });
+    }
     return map;
-  }, [sources]);
+  }, [sources, citationDocuments]);
 
   // Stores placeholder-key → { docId, display, filename } so the `a` renderer can
   // recover the original text after we replaced it with a markdown-safe key.
