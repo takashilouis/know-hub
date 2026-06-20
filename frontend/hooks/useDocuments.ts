@@ -143,7 +143,7 @@ export function useDocuments({
 
     if (selectedFolder !== null && selectedFolder !== "all") {
       queryParams.append("folder_name", selectedFolder);
-      queryParams.append("folder_depth", "-1");
+      // folder_depth omitted → backend default is 0 (exact folder match only, no subfolders)
     }
 
     const queryString = queryParams.toString();

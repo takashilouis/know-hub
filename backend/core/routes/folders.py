@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from core.auth_utils import verify_token
 from core.database.postgres_database import InvalidMetadataFilterError
 from core.models.auth import AuthContext
-from core.models.folders import Folder, FolderCreate, FolderSummary
+from core.models.folders import Folder, FolderCreate, FolderRename, FolderSummary
 from core.models.request import FolderDetailsRequest
 from core.models.responses import (
     DocumentAddToFolderResponse,
@@ -353,6 +353,112 @@ async def remove_document_from_folder(
         }
     except Exception as e:
         logger.error(f"Error removing document from folder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/{folder_id}/rename", response_model=Folder)
+async def rename_folder(
+    folder_id: str,
+    body: FolderRename,
+    auth: AuthContext = Depends(verify_token),
+) -> Folder:
+    """
+    Rename a folder. Updates the folder name and full_path atomically with all
+    descendant folders and documents in a single transaction.
+    """
+    try:
+        from sqlalchemy import text
+
+        folder = await document_service.db.get_folder(folder_id, auth)
+        if not folder:
+            raise HTTPException(status_code=404, detail="Folder not found")
+
+        old_full_path = folder.full_path or normalize_folder_path(folder.name)
+        parent_prefix = "/".join(old_full_path.rstrip("/").split("/")[:-1])
+        new_full_path = normalize_folder_path(f"{parent_prefix}/{body.name}" if parent_prefix else body.name)
+
+        if new_full_path == old_full_path:
+            return folder
+
+        async with document_service.db.async_session() as session:
+            async with session.begin():
+                # 1. Update the renamed folder itself (atomically with the cascade below)
+                await session.execute(
+                    text(
+                        """
+                        UPDATE folders
+                        SET name = :new_name,
+                            full_path = :new_full_path,
+                            system_metadata = system_metadata || jsonb_build_object('updated_at', NOW()::text)
+                        WHERE id = :folder_id
+                        """
+                    ),
+                    {"new_name": body.name, "new_full_path": new_full_path, "folder_id": folder_id},
+                )
+
+                # 2. Cascade path update to descendant folders
+                await session.execute(
+                    text(
+                        """
+                        UPDATE folders
+                        SET full_path = :new_prefix || SUBSTRING(full_path, :old_len + 1)
+                        WHERE full_path LIKE :old_prefix_pattern
+                        """
+                    ),
+                    {
+                        "new_prefix": new_full_path,
+                        "old_len": len(old_full_path),
+                        "old_prefix_pattern": old_full_path.rstrip("/") + "/%",
+                    },
+                )
+
+                # 3. Update documents directly in the renamed folder.
+                # Use folder_id (stable UUID) rather than folder_path so this is robust
+                # against prior failed renames that left folder_path stale on documents.
+                # CAST(... AS text) is required — jsonb_build_object takes variadic "any"
+                # so asyncpg cannot infer the parameter type on its own.
+                await session.execute(
+                    text(
+                        """
+                        UPDATE documents
+                        SET folder_name = :new_name_doc,
+                            folder_path = :new_full_path_doc,
+                            doc_metadata = doc_metadata || jsonb_build_object('folder_name', CAST(:new_full_path_json AS text))
+                        WHERE folder_id = :folder_id_doc
+                        """
+                    ),
+                    {
+                        "new_name_doc": body.name,
+                        "new_full_path_doc": new_full_path,
+                        "new_full_path_json": new_full_path,
+                        "folder_id_doc": folder_id,
+                    },
+                )
+
+                # 4. Update documents in descendant folders by joining with the already-updated
+                # folders table so folder_path in documents always matches the folder record.
+                await session.execute(
+                    text(
+                        """
+                        UPDATE documents
+                        SET folder_path = f.full_path,
+                            doc_metadata = documents.doc_metadata || jsonb_build_object('folder_name', CAST(f.full_path AS text))
+                        FROM folders f
+                        WHERE documents.folder_id = f.id
+                          AND f.full_path LIKE :new_desc_pattern
+                        """
+                    ),
+                    {"new_desc_pattern": new_full_path.rstrip("/") + "/%"},
+                )
+
+        updated = await document_service.db.get_folder(folder_id, auth)
+        if not updated:
+            raise HTTPException(status_code=500, detail="Folder not found after rename")
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error renaming folder: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

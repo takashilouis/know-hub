@@ -19,8 +19,18 @@ import {
   Folder as FolderIcon,
   FileText,
   Loader2,
+  FolderInput,
+  Pencil,
+  X,
 } from "lucide-react";
 import { showAlert } from "@/components/ui/alert-system";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { Document, FolderSummary, ProcessingProgress } from "../types";
 import { EmptyDocuments, NoMatchingDocuments, LoadingDocuments } from "./shared/EmptyStates";
@@ -53,6 +63,8 @@ interface DocumentListProps {
   onDownloadDocument?: (documentId: string) => void; // Add download functionality
   onDeleteDocument?: (documentId: string) => void; // Add delete functionality
   onDeleteMultipleDocuments?: () => void; // Add bulk delete functionality
+  onMoveToFolder?: (docIds: string[], targetFolder: FolderSummary | null) => void; // Move selected docs to a folder (null = remove from all folders)
+  onRenameFolder?: (folderId: string, newName: string) => Promise<void>; // Rename a folder
   folders?: FolderSummary[]; // Optional since it's fetched internally
   showBorder?: boolean; // Control whether to show the outer border and rounded corners
   hideSearchBar?: boolean; // Control whether to hide the search bar
@@ -83,6 +95,9 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
   onDownloadDocument,
   onDeleteDocument,
   onDeleteMultipleDocuments,
+  onMoveToFolder,
+  onRenameFolder,
+  folders,
   showBorder = true,
   hideSearchBar = false,
   externalSearchQuery = "",
@@ -101,6 +116,51 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
   const effectiveSearchQuery = hideSearchBar ? externalSearchQuery : searchQuery;
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Move-to-folder feature state
+  const [showMoveModal, setShowMoveModal] = useState(false);
+  const [singleMoveDocId, setSingleMoveDocId] = useState<string | null>(null); // for per-row move
+  const [draggingDocIds, setDraggingDocIds] = useState<string[]>([]);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+
+  // Folder rename state
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const activeMoveDocIds = singleMoveDocId ? [singleMoveDocId] : selectedDocuments;
+
+  const handleMoveModalConfirm = useCallback(
+    async (targetFolder: FolderSummary | null) => {
+      if (!onMoveToFolder || isMoving || activeMoveDocIds.length === 0) return;
+      setIsMoving(true);
+      setShowMoveModal(false);
+      setSingleMoveDocId(null);
+      try {
+        await onMoveToFolder(activeMoveDocIds, targetFolder);
+        if (!singleMoveDocId) setSelectedDocuments([]);
+      } finally {
+        setIsMoving(false);
+      }
+    },
+    [onMoveToFolder, isMoving, activeMoveDocIds, singleMoveDocId, setSelectedDocuments]
+  );
+
+  const handleRenameConfirm = useCallback(
+    async (folderId: string) => {
+      if (!onRenameFolder || !renameValue.trim() || isRenaming) return;
+      setIsRenaming(true);
+      try {
+        await onRenameFolder(folderId, renameValue.trim());
+      } finally {
+        setIsRenaming(false);
+        setRenamingFolderId(null);
+        setRenameValue("");
+      }
+    },
+    [onRenameFolder, renameValue, isRenaming]
+  );
 
   const paginationConfig = pagination;
 
@@ -519,6 +579,18 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
                 <Button variant="ghost" size="sm" onClick={() => setSelectedDocuments([])}>
                   Clear selection
                 </Button>
+                {onMoveToFolder && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMoveModal(true)}
+                    disabled={isMoving}
+                    className="flex items-center gap-2"
+                  >
+                    <FolderInput className="h-4 w-4" />
+                    Move to
+                  </Button>
+                )}
                 {onDeleteMultipleDocuments && (
                   <Button
                     variant="destructive"
@@ -566,28 +638,82 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
                     : ""
                 }`}
                 onClick={() => {
-                  // Handle different item types
                   if (itemType === "folder") {
-                    // Navigate to folder when clicking on folder row (but not on chevron)
                     handleDocumentClick(doc);
                   } else {
-                    // Handle document clicks for actual documents
                     handleDocumentClick(doc);
                   }
                 }}
                 className={`relative flex min-w-fit border-b border-border ${
                   itemType === "folder"
-                    ? "cursor-pointer hover:bg-muted/50"
+                    ? dragOverFolderId === doc.external_id
+                      ? "cursor-pointer bg-blue-50 outline outline-2 outline-blue-400 dark:bg-blue-950/30"
+                      : "cursor-pointer hover:bg-muted/50"
                     : doc.external_id === selectedDocument?.external_id
                       ? "cursor-pointer bg-primary/10 hover:bg-primary/15"
                       : "cursor-pointer hover:bg-muted/70"
                 } ${
                   (doc as Document & { isChildDocument?: boolean }).isChildDocument ? "bg-gray-50 dark:bg-gray-900" : ""
+                } ${
+                  onMoveToFolder && (!itemType || itemType === "document") && draggingDocIds.length > 0
+                    ? "opacity-70"
+                    : ""
                 }`}
-                style={
-                  {
-                    // no-op for flex container
-                  }
+                style={{}}
+                /* --- Drag source: document rows --- */
+                draggable={onMoveToFolder != null && (!itemType || itemType === "document")}
+                onDragStart={
+                  onMoveToFolder && (!itemType || itemType === "document")
+                    ? e => {
+                        const ids = selectedDocuments.includes(doc.external_id)
+                          ? selectedDocuments
+                          : [doc.external_id];
+                        setDraggingDocIds(ids);
+                        e.dataTransfer.setData("application/x-doc-ids", JSON.stringify(ids));
+                        e.dataTransfer.effectAllowed = "move";
+                      }
+                    : undefined
+                }
+                onDragEnd={
+                  onMoveToFolder && (!itemType || itemType === "document")
+                    ? () => setDraggingDocIds([])
+                    : undefined
+                }
+                /* --- Drop target: folder rows --- */
+                onDragOver={
+                  onMoveToFolder && itemType === "folder"
+                    ? e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = "move";
+                        setDragOverFolderId(doc.external_id);
+                      }
+                    : undefined
+                }
+                onDragLeave={
+                  onMoveToFolder && itemType === "folder"
+                    ? e => {
+                        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                          setDragOverFolderId(null);
+                        }
+                      }
+                    : undefined
+                }
+                onDrop={
+                  onMoveToFolder && itemType === "folder"
+                    ? e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setDragOverFolderId(null);
+                        const folderItem = doc as DocumentListItem;
+                        if (!folderItem.folderData) return;
+                        const raw = e.dataTransfer.getData("application/x-doc-ids");
+                        if (!raw) return;
+                        const docIds: string[] = JSON.parse(raw);
+                        setDraggingDocIds([]);
+                        onMoveToFolder(docIds, folderItem.folderData);
+                      }
+                    : undefined
                 }
               >
                 {/* Main scrollable content */}
@@ -712,10 +838,10 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
                       : ""
                   }`}
                 >
-                  {/* Only show actions for actual documents, not folders or special items */}
+                  {/* Document row actions */}
                   {(!itemType || itemType === "document") && (
                     <>
-                      {doc.content_type === "application/pdf" && onViewInPDFViewer && (
+                      {(doc.content_type === "application/pdf" || doc.filename?.toLowerCase().endsWith(".pdf")) && onViewInPDFViewer && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -727,6 +853,21 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
                           title="View in PDF Viewer"
                         >
                           <Eye className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onMoveToFolder && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSingleMoveDocId(doc.external_id);
+                            setShowMoveModal(true);
+                          }}
+                          className="h-8 w-8 p-0"
+                          title="Move to folder"
+                        >
+                          <FolderInput className="h-4 w-4" />
                         </Button>
                       )}
                       {onDownloadDocument && (
@@ -758,6 +899,57 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
                         </Button>
                       )}
                     </>
+                  )}
+                  {/* Folder row actions */}
+                  {itemType === "folder" && onRenameFolder && typedDoc.folderData?.id && (
+                    renamingFolderId === typedDoc.folderData.id ? (
+                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={e => setRenameValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") handleRenameConfirm(typedDoc.folderData!.id!);
+                            if (e.key === "Escape") { setRenamingFolderId(null); setRenameValue(""); }
+                          }}
+                          className="h-6 w-20 rounded border border-border bg-background px-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          disabled={isRenaming}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRenameConfirm(typedDoc.folderData!.id!)}
+                          className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+                          disabled={isRenaming}
+                          title="Confirm rename"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setRenamingFolderId(null); setRenameValue(""); }}
+                          className="h-6 w-6 p-0"
+                          title="Cancel"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setRenamingFolderId(typedDoc.folderData!.id!);
+                          setRenameValue(typedDoc.folderData!.name || "");
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="Rename folder"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )
                   )}
                 </div>
               </div>
@@ -818,6 +1010,46 @@ const DocumentList: React.FC<DocumentListProps> = React.memo(function DocumentLi
           </div>
         )}
       </div>
+
+      {/* Move-to-folder dialog */}
+      <Dialog open={showMoveModal} onOpenChange={v => { setShowMoveModal(v); if (!v) setSingleMoveDocId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Move to folder</DialogTitle>
+            <DialogDescription>
+              Select a destination for {activeMoveDocIds.length} selected item
+              {activeMoveDocIds.length !== 1 ? "s" : ""}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-64 space-y-0.5 overflow-y-auto py-2">
+            {/* Option to remove from all folders (move to root) */}
+            <button
+              className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-muted/70 disabled:opacity-50"
+              disabled={isMoving}
+              onClick={() => handleMoveModalConfirm(null)}
+            >
+              <FileText className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              <span className="flex-1 truncate text-left font-medium text-muted-foreground">No folder (remove from folder)</span>
+            </button>
+            {(folders ?? []).length > 0 && <div className="my-1 border-t" />}
+            {(folders ?? []).map(folder => (
+              <button
+                key={folder.id}
+                className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-muted/70 disabled:opacity-50"
+                style={{ paddingLeft: `${12 + (folder.depth ?? 0) * 16}px` }}
+                disabled={isMoving}
+                onClick={() => handleMoveModalConfirm(folder)}
+              >
+                <FolderIcon className="h-4 w-4 flex-shrink-0 text-blue-600" />
+                <span className="flex-1 truncate text-left font-medium">{folder.name}</span>
+                {folder.full_path && folder.full_path !== folder.name && (
+                  <span className="max-w-[110px] truncate text-xs text-muted-foreground">{folder.full_path}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });

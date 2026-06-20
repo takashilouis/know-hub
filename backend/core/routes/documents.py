@@ -364,8 +364,18 @@ async def download_document_file(document_id: str, auth: AuthContext = Depends(v
         logger.info(f"Successfully downloaded {len(file_content)} bytes")
 
         # Create streaming response
+        from urllib.parse import quote as urlquote
 
         from fastapi.responses import StreamingResponse
+
+        raw_filename = doc.filename or "document"
+        # HTTP headers must be latin-1; use RFC 5987 encoding so filenames with
+        # Unicode characters (curly quotes, accents, CJK, …) are preserved.
+        ascii_fallback = raw_filename.encode("ascii", errors="replace").decode("ascii")
+        encoded_filename = urlquote(raw_filename, safe="")
+        content_disposition = (
+            f"inline; filename=\"{ascii_fallback}\"; filename*=UTF-8''{encoded_filename}"
+        )
 
         def generate():
             yield file_content
@@ -374,7 +384,7 @@ async def download_document_file(document_id: str, auth: AuthContext = Depends(v
             generate(),
             media_type=doc.content_type or "application/octet-stream",
             headers={
-                "Content-Disposition": f"inline; filename=\"{doc.filename or 'document'}\"",
+                "Content-Disposition": content_disposition,
                 "Content-Length": str(len(file_content)),
             },
         )

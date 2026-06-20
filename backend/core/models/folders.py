@@ -49,6 +49,12 @@ class FolderCreate(BaseModel):
     description: Optional[str] = None
 
 
+class FolderRename(BaseModel):
+    """Request model for renaming a folder"""
+
+    name: str
+
+
 # ---------------------------------------------------------------------------
 # Lightweight projection used by the `/folders/summary` endpoint.  This keeps
 # payloads tiny by excluding the expansive *document_ids* array while still
