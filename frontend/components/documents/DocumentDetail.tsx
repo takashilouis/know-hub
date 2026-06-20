@@ -583,7 +583,7 @@ const DocumentDetail: React.FC<DocumentDetailProps> = ({
           )}
 
           {/* PDF Viewer Button - only show for PDF documents */}
-          {selectedDocument.content_type === "application/pdf" && onViewInPDFViewer && (
+          {(selectedDocument.content_type === "application/pdf" || selectedDocument.filename?.toLowerCase().endsWith(".pdf")) && onViewInPDFViewer && (
             <div>
               <Button
                 onClick={() => onViewInPDFViewer(selectedDocument.external_id)}

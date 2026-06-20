@@ -26,6 +26,7 @@ import {
   CheckCircle,
   AlertCircle,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
@@ -683,7 +684,7 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
     setPdfState(prev => ({ ...prev, scale: 1.0 }));
   }, []);
 
-  // Fetch available PDF documents — use /documents/list_docs (correct endpoint)
+  // Fetch available documents — folder_depth is a query param on the backend, not a body field
   const fetchAvailableDocuments = useCallback(async () => {
     if (!apiBaseUrl) return;
 
@@ -699,7 +700,6 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
       });
 
       if (response.ok) {
-        // /documents/list_docs returns { documents: [...], total, ... }
         const data = await response.json();
         const allDocuments: Array<{
           external_id: string;
@@ -709,20 +709,20 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
           system_metadata?: { created_at?: string; status?: string };
         }> = Array.isArray(data) ? data : (data.documents ?? []);
 
-        const pdfDocuments: PDFDocument[] = allDocuments
-          .filter(doc => doc.content_type === "application/pdf")
-          .map(doc => ({
-            id: doc.external_id,
-            filename: doc.filename || `Document ${doc.external_id}`,
-            download_url: "",
-            created_at: doc.system_metadata?.created_at,
-            folder_name: doc.folder_name,
-            status: doc.system_metadata?.status || "unknown",
-          }));
+        // Show all uploaded documents — no content-type filter so nothing is accidentally hidden.
+        // The viewer will surface an error if a selected file cannot be parsed as PDF.
+        const pdfDocuments: PDFDocument[] = allDocuments.map(doc => ({
+          id: doc.external_id,
+          filename: doc.filename || `Document ${doc.external_id}`,
+          download_url: "",
+          created_at: doc.system_metadata?.created_at,
+          folder_name: doc.folder_name,
+          status: doc.system_metadata?.status || "unknown",
+        }));
 
         setAvailableDocuments(pdfDocuments);
       } else {
-        console.error("Failed to fetch documents:", response.statusText);
+        console.error("Failed to fetch documents:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Error fetching documents:", error);
@@ -890,14 +890,24 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
         {/* Document List Area */}
         <div className="flex min-h-0 flex-1 flex-col p-8">
           <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col">
-            {availableDocuments.length >= 1 && (
-              <div className="mb-6 text-center">
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Select a PDF Document</h3>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Choose from your uploaded PDF documents to view and chat about
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Select a Document</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Choose from your uploaded documents to view and chat about
                 </p>
               </div>
-            )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchAvailableDocuments}
+                disabled={isLoadingDocuments}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoadingDocuments ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
 
             {isLoadingDocuments ? (
               <div className="flex flex-1 items-center justify-center py-12">
@@ -909,10 +919,14 @@ export function PDFViewer({ apiBaseUrl, authToken, initialDocumentId, onChatTogg
             ) : availableDocuments.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
                 <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-medium">No PDF documents found</h3>
+                <h3 className="mb-2 text-lg font-medium">No documents found</h3>
                 <p className="mb-4 text-sm text-muted-foreground">
-                  Upload some PDF documents in the Documents section first to view them here.
+                  Upload documents in the Documents section, then click Refresh to see them here.
                 </p>
+                <Button variant="outline" size="sm" onClick={fetchAvailableDocuments} className="flex items-center gap-2">
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh
+                </Button>
               </div>
             ) : (
               <ScrollArea className="min-h-0 flex-1 px-4">

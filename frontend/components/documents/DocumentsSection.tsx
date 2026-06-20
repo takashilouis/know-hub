@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 // import { useDebounce } from '../../lib/hooks/useDebounce'; // Commented for future use
-import { Upload, Search } from "lucide-react";
+import { Upload, Search, ChevronLeft } from "lucide-react";
 import { showAlert, removeAlert } from "@/components/ui/alert-system";
 import DocumentList from "./DocumentList";
 import DocumentDetail from "./DocumentDetail";
@@ -33,23 +33,30 @@ import { buildFolderTree, flattenFolderTree, normalizeFolderPathValue } from "..
 function useDragAndDrop({ onDrop, disabled = false }: { onDrop: (files: File[]) => void; disabled?: boolean }) {
   const [isDragging, setIsDragging] = useState(false);
 
+  // Internal row-to-folder drags carry this type — ignore them so the upload
+  // overlay never appears and folder rows can receive their own drop events.
+  const isInternalDrag = (e: React.DragEvent) =>
+    e.dataTransfer.types.includes("application/x-doc-ids");
+
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
-      if (disabled) return;
+      if (disabled || isInternalDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(true);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled]
   );
 
   const handleDragEnter = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
-      if (disabled) return;
+      if (disabled || isInternalDrag(e)) return;
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(true);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled]
   );
 
@@ -70,11 +77,15 @@ function useDragAndDrop({ onDrop, disabled = false }: { onDrop: (files: File[]) 
       e.stopPropagation();
       setIsDragging(false);
 
+      // Ignore internal doc-move drops — those are handled by DocumentList rows.
+      if (isInternalDrag(e)) return;
+
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
         onDrop(files);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [disabled, onDrop]
   );
 
@@ -477,6 +488,14 @@ const DocumentsSection = React.forwardRef<
       [onFolderClick]
     );
 
+    // Navigate to parent folder (strips last path segment)
+    const handleGoBack = useCallback(() => {
+      if (!selectedFolder) return;
+      const parts = normalizeFolderPathValue(selectedFolder).split("/").filter(Boolean);
+      const parent = parts.length <= 1 ? null : "/" + parts.slice(0, -1).join("/");
+      handleFolderSelect(parent);
+    }, [selectedFolder, handleFolderSelect]);
+
     // Handle document or folder click
     const handleDocumentClick = useCallback(
       (
@@ -763,6 +782,138 @@ const DocumentsSection = React.forwardRef<
         setItemsToDeleteCount(0);
       }
     };
+
+    // Move selected documents into a target folder
+    const handleMoveToFolder = useCallback(
+      async (docIds: string[], targetFolder: FolderSummary | null) => {
+        if (docIds.length === 0) return;
+
+        const isRemoveFromFolder = targetFolder === null;
+        const alertLabel = isRemoveFromFolder ? "Removing from folder…" : `Moving ${docIds.length} document${docIds.length > 1 ? "s" : ""}…`;
+        const alertId = "move-docs-progress";
+        showAlert(alertLabel, {
+          type: "info",
+          id: alertId,
+          duration: 0,
+        });
+
+        try {
+          for (const docId of docIds) {
+            // Skip folder items — only documents can be moved via folder membership
+            const item = filteredItems.find(i => i.external_id === docId) as
+              | (Document & { itemType?: string })
+              | undefined;
+            if (item?.itemType === "folder") continue;
+
+            // Remove from current folder using selectedFolder (the folder currently being viewed).
+            // This is more reliable than reading doc.folder_path which may be empty or stale.
+            const currentFolder = selectedFolder
+              ? folders.find(
+                  f => normalizeFolderPathValue(f.full_path || f.name) === normalizeFolderPathValue(selectedFolder)
+                )
+              : null;
+            if (currentFolder && currentFolder.id && (isRemoveFromFolder || currentFolder.id !== targetFolder!.id)) {
+              await fetch(`${effectiveApiUrl}/folders/${currentFolder.id}/documents/${docId}`, {
+                method: "DELETE",
+                headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+              });
+            }
+
+            // Add to target folder (skip when removing)
+            if (!isRemoveFromFolder) {
+              await fetch(`${effectiveApiUrl}/folders/${targetFolder!.id}/documents/${docId}`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                },
+              });
+            }
+          }
+
+          removeAlert(alertId);
+          showAlert(
+            isRemoveFromFolder
+              ? `Removed ${docIds.length} document${docIds.length > 1 ? "s" : ""} from folder`
+              : `Moved ${docIds.length} document${docIds.length > 1 ? "s" : ""} to "${targetFolder!.name}"`,
+            { type: "success", duration: 3000 }
+          );
+
+          clearFoldersCache(effectiveApiUrl);
+          clearDocumentsCache();
+          clearUnorganizedDocumentsCache(unorganizedCacheKey);
+          await Promise.all([refreshFolders(), refreshDocuments(), refreshUnorganizedDocuments()]);
+          setSelectedDocuments([]);
+        } catch (err) {
+          removeAlert(alertId);
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          showAlert(`Failed to move documents: ${msg}`, { type: "error", duration: 5000 });
+        }
+      },
+      [
+        effectiveApiUrl,
+        authToken,
+        filteredItems,
+        selectedFolder,
+        folders,
+        refreshFolders,
+        refreshDocuments,
+        refreshUnorganizedDocuments,
+        unorganizedCacheKey,
+      ]
+    );
+
+    // Rename a folder via PATCH /folders/{id}/rename, then cascade-navigate to new path
+    const handleRenameFolder = useCallback(
+      async (folderId: string, newName: string) => {
+        const response = await fetch(`${effectiveApiUrl}/folders/${folderId}/rename`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          },
+          body: JSON.stringify({ name: newName }),
+        });
+
+        if (!response.ok) {
+          const err = await response.text();
+          showAlert(`Failed to rename folder: ${err}`, { type: "error", duration: 5000 });
+          return;
+        }
+
+        const updated = await response.json();
+
+        // If we're currently inside the renamed folder, navigate to the new path
+        if (selectedFolder) {
+          const oldNorm = normalizeFolderPathValue(selectedFolder);
+          const renamedFolder = folders.find(f => f.id === folderId);
+          if (renamedFolder) {
+            const renamedPath = normalizeFolderPathValue(renamedFolder.full_path || renamedFolder.name);
+            if (oldNorm === renamedPath || oldNorm.startsWith(renamedPath + "/")) {
+              const newPath = normalizeFolderPathValue(updated.full_path || updated.name);
+              handleFolderSelect(newPath);
+            }
+          }
+        }
+
+        clearFoldersCache(effectiveApiUrl);
+        clearDocumentsCache();
+        clearUnorganizedDocumentsCache(unorganizedCacheKey);
+        await Promise.all([refreshFolders(), refreshDocuments(), refreshUnorganizedDocuments()]);
+        showAlert(`Folder renamed to "${newName}"`, { type: "success", duration: 3000 });
+      },
+      [
+        effectiveApiUrl,
+        authToken,
+        selectedFolder,
+        folders,
+        handleFolderSelect,
+        unorganizedCacheKey,
+        refreshFolders,
+        refreshDocuments,
+        refreshUnorganizedDocuments,
+      ]
+    );
 
     // Expose methods via ref
     React.useImperativeHandle(ref, () => ({
@@ -1558,6 +1709,21 @@ const DocumentsSection = React.forwardRef<
           loading={loading}
         />
 
+        {selectedFolder && (
+          <div className="mb-2 flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 px-2 text-muted-foreground hover:text-foreground"
+              onClick={handleGoBack}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </Button>
+            <span className="truncate text-sm text-muted-foreground">{selectedFolder}</span>
+          </div>
+        )}
+
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -1614,6 +1780,8 @@ const DocumentsSection = React.forwardRef<
                   onDownloadDocument={handleDownloadDocument}
                   onDeleteDocument={handleDeleteDocument}
                   onDeleteMultipleDocuments={handleDeleteMultipleDocuments}
+                  onMoveToFolder={handleMoveToFolder}
+                  onRenameFolder={handleRenameFolder}
                   folders={folders}
                   showBorder={true}
                   hideSearchBar={true}
